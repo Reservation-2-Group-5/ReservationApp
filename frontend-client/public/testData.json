@@ -1,0 +1,56 @@
+[{
+    "id": 1,
+    "pTag": "111111111",
+    "name": "Apple MacBook Pro",
+    "description": "15-inch, 2017, 2.8 GHz Intel Core i7, 16 GB 2133 MHz LPDDR3, Radeon Pro 555 2048 MB, Intel HD Graphics 630 1536 MB",
+    "image": "https://cataas.com/cat",
+    "category": "laptop",
+    "status": "available",
+    "location": "office",
+    "date": "2023-09-29T22:46:15.286Z"
+  },
+  {
+    "id": 2,
+    "pTag": "222222222",
+    "name": "HP Printer",
+    "description": "HP LaserJet Pro MFP M426fdw",
+    "image": "https://cataas.com/cat",
+    "category": "printer",
+    "status": "unavailable",
+    "location": "office",
+    "date": "2023-08-15T10:50:12.328Z"
+  },
+  {
+    "id": 3,
+    "pTag": "333333333",
+    "name": "Apple iPhone 11",
+    "description": "Apple iPhone 11 128GB, Black",
+    "image": "https://cataas.com/cat",
+    "category": "phone",
+    "status": "available",
+    "location": "office",
+    "date": "2023-07-08T12:01:40.237Z"
+  },
+  {
+    "id": 4,
+    "pTag": "444444444",
+    "name": "Logitech Keyboard",
+    "description": "Logitech K380 Multi-Device Bluetooth Keyboard",
+    "image": "https://cataas.com/cat",
+    "category": "keyboard",
+    "status": "available",
+    "location": "building B",
+    "date": "2023-07-08T12:01:40.237Z"
+  },
+  {
+    "id": 5,
+    "pTag": "555555555",
+    "name": "Logitech Mouse",
+    "description": "Logitech MX Master 3 Advanced Wireless Mouse",
+    "image": "https://cataas.com/cat",
+    "category": "mouse",
+    "status": "unavailable",
+    "location": "building A",
+    "date": "2023-07-08T12:01:40.237Z"
+  }
+]
