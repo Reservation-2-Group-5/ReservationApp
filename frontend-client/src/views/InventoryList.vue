@@ -3,31 +3,34 @@
     <div class="card">
       <DataTable
         :loading="loading"
+        v-model:selection="selectedInventory"
+        v-model:filters="filters"
+        filterDisplay="row"
+        :value="inventory"
+        dataKey="id"
+        @update:selection="clearSelection"
+        :metaKeySelection="false"
         paginator
         removableSort
+        scrollable
+        scrollHeight="flex"
         :rows="5"
-        :value="inventory"
-        tableStyle="min-width: 50rem">
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        :rowsPerPageOptions="[5, 10, 25]"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} items"
+        :globalFilterFields="['status']"
+        tableStyle="min-width: 50rem;"
+        class="inventory-table">
         <template #header>
           <div class="flex flex-wrap align-items-center justify-content-between gap-2">
             <span class="text-xl text-900 font-bold">Inventory</span>
             <Button icon="pi pi-refresh" rounded raised @click="fetchData" />
           </div>
         </template>
+        <Column selectionMode="multiple" />
         <Column header="Image">
-          <template #body="slotProps">
-            <div class="card flex justify-content-center">
-              <img
-                :src="`${slotProps.data.image}?width=50&now=${Date.now()}`"
-                :alt="slotProps.image"
-                class="w-6rem shadow-2 border-round"
-                @click="toggle"
-                style="cursor:pointer" />
-
-              <OverlayPanel ref="op">
-                <img :src="`${slotProps.data.image}?width=200&now=${Date.now()}`" alt="Cat" />
-              </OverlayPanel>
-            </div>
+          <template #body="{ data }">
+            <ImageColumn :img="data.image" />
           </template>
         </Column>
         <Column field="name" header="Name" sortable />
@@ -36,20 +39,24 @@
         <Column field="pTag" header="P-Tag" sortable />
         <Column field="location" header="Location" sortable />
         <Column field="date" header="Date">
-          <template #body="slotProps">
-            {{ Date(slotProps.data.date).toString() }}
+          <template #body="{ data }">
+            {{ Date(data.date).toString() }}
           </template>
         </Column>
-        <Column header="Status">
-          <template #body="slotProps">
+        <Column field="status" header="Status" :showFilterMenu="false" :filterMenuStyle="{ width: '14rem' }">
+          <template #body="{ data }">
             <Tag
-              :value="slotProps.data.status"
-              :severity="getSeverity(slotProps.data)" />
+              :value="data.status"
+              :severity="getSeverity(data.status)" />
+          </template>
+          <template #filter="{ filterModel, filterCallback }">
+            <Dropdown v-model="filterModel.value" @change="filterCallback()" :options="statuses" placeholder="Select One" class="p-column-filter" style="min-width: 12rem" :showClear="true">
+              <template #option="{ option }">
+                <Tag :value="option" :severity="getSeverity(option)" />
+              </template>
+            </Dropdown>
           </template>
         </Column>
-        <template #footer>
-          In total there are {{ inventory ? inventory.length : 0 }} inventory items.
-        </template>
       </DataTable>
     </div>
   </main>
@@ -61,43 +68,32 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Tag from 'primevue/tag';
 import Button from 'primevue/button';
-import OverlayPanel from 'primevue/overlaypanel';
+import Dropdown from 'primevue/dropdown';
+import { FilterMatchMode } from 'primevue/api';
+import ImageColumn from '@/components/ImageColumn.vue';
 import { isDev } from '@/utils/env';
 import sleep from '@/utils/sleep';
 
 const inventory = ref([]);
 const loading = ref(false);
-const op = ref();
-const toggle = (event) => {
-  op.value.toggle(event);
-};
+const selectedInventory = ref();
 
-async function fetchDevData() {
-  try {
-    const response = await fetch('testData.json');
-    const json = await response.json();
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+  status: { value: null, matchMode: FilterMatchMode.EQUALS },
+});
 
-    // Simulate a delay
-    await sleep(1000);
+const statuses = ref(['available', 'unavailable']);
 
-    inventory.value = json;
-    loading.value = false;
-  } catch (err) {
-    console.error(err);
-    inventory.value = [];
-    loading.value = false;
-  }
-}
-
-async function fetchData() {
+async function fetchData(location) {
   inventory.value = [];
   loading.value = true;
   if (isDev) {
-    await fetchDevData();
-    return;
+    // simulate a fetch delay
+    await sleep(1000);
   }
   try {
-    const response = await fetch('db');
+    const response = await fetch(location);
     const json = await response.json();
     inventory.value = json;
     loading.value = false;
@@ -106,21 +102,41 @@ async function fetchData() {
   }
 }
 
-function getSeverity(slotProps) {
-  console.log('props', slotProps);
-  if (slotProps.status === 'unavailable') {
+function getSeverity(status) {
+  if (status === 'unavailable') {
     return 'danger';
   }
   return 'success';
 }
 
+function clearSelection(event) {
+  const currentSelection = (event.length && event.length <= 2) ? event[event.length - 1] : null;
+  selectedInventory.value = (currentSelection) ? [currentSelection] : [];
+}
+
 // fetch the data when the view is created and the data is
 // already being observed
-onMounted(fetchData);
+onMounted(async () => {
+  const location = (isDev) ? 'testData.json' : 'db';
+  await fetchData(location);
+});
 </script>
 
 <style scoped>
 main {
-  max-height: calc(100vh - 64px);
+  flex: 1;
+}
+
+main .card {
+  flex: 1;
+  display: flex;
+}
+
+.inventory-table {
+  flex: 1;
+}
+
+:deep([data-pc-section="headercheckboxwrapper"]) {
+  display: none;
 }
 </style>
