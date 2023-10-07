@@ -1,6 +1,12 @@
 <template>
   <div class="card relative z-2 header">
-    <Menubar :model="items">
+    <Menubar
+      :model="items"
+      :pt="{
+        menuItem: ({ props, context }) => ({
+          class: assignClasses(props, context),
+        }),
+      }">
       <template #start>
         <img alt="logo" src="https://primefaces.org/cdn/primevue/images/logo.svg" height="40" class="mr-2 logo" />
       </template>
@@ -24,20 +30,32 @@
           <span :class="[hasSubmenu && (root ? 'pi pi-fw pi-angle-down' : 'pi pi-fw pi-angle-right')]" v-bind="props.submenuicon" />
         </a>
       </template>
-      <template #end>
-        <InputText placeholder="Search" type="text" />
-      </template>
     </Menubar>
   </div>
 </template>
 
 <script setup>
-import Menubar from 'primevue/menubar';
-import InputText from 'primevue/inputtext';
 import { ref } from 'vue';
+import Menubar from 'primevue/menubar';
 import navbarItems from '@/config/navbarItems';
 
 const items = ref(navbarItems);
+const rightAlignedCount = ref(2);
+
+// TODO: get isAdmin from login
+const isAdmin = ref(false);
+
+function assignClasses(props, context) {
+  const classList = [];
+  if (context.index === props.items.length - rightAlignedCount.value) {
+    classList.push('right-aligned');
+  }
+  if (context.item.item.label === 'Admin' && !isAdmin.value) {
+    // hide admin menu item if not admin
+    classList.push('hidden-menuitem');
+  }
+  return classList.join(' ');
+}
 </script>
 
 <style scoped>
@@ -51,5 +69,19 @@ const items = ref(navbarItems);
 
 :deep(.p-menubar) {
   border-radius: 0;
+  width: 100%;
+}
+
+:deep(.p-menubar-root-list) {
+  flex: 1;
+  width: 100%;
+}
+
+:deep(.right-aligned) {
+  margin-left: auto;
+}
+
+:deep(.hidden-menuitem) {
+  display: none;
 }
 </style>
