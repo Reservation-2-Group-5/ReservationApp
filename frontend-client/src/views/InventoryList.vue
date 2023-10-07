@@ -1,5 +1,6 @@
 <template>
   <main>
+    <Toast />
     <div class="card">
       <DataTable
         :loading="loading"
@@ -103,8 +104,8 @@
           </template>
         </Column>
         <template #footer>
-          <div class="flex justify-center">
-            <Button type="button" icon="pi pi-check-square" label="Submit" @click="submitSelection" />
+          <div class="submit-btn">
+            <Button type="submit" icon="pi pi-check-square" label="Submit" @click.prevent="submitSelection" />
           </div>
         </template>
       </DataTable>
@@ -128,10 +129,14 @@ import Calendar from 'primevue/calendar';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import AutoComplete from 'primevue/autocomplete';
+import Toast from 'primevue/toast';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
+import { useToast } from 'primevue/usetoast';
 import ImageColumn from '@/components/inventory-list/ImageColumn.vue';
 import { isDev } from '@/utils/env';
 import sleep from '@/utils/sleep';
+
+const toast = useToast();
 
 // create the reactive variables
 const inventory = ref([]);
@@ -268,16 +273,40 @@ const searchItems = (event) => {
 
 // submit the selected items to the server
 function submitSelection() {
-  if (!selectedInventory.value?.length) return;
+  if (!selectedInventory.value?.length) {
+    toast.add({
+      severity: 'warn',
+      summary: 'No items selected',
+      detail: 'Please select at least one item to submit',
+      life: 3000,
+    });
+    return;
+  }
   if (selectedInventory.value.length > 1) {
-    console.log('multiple items selected');
+    toast.add({
+      severity: 'warn',
+      summary: 'Multiple items selected',
+      detail: 'Only one item can be submitted at a time',
+      life: 3000,
+    });
     return;
   }
   if (selectedInventory.value[0].status === 'unavailable') {
-    console.log('item is unavailable');
+    toast.add({
+      severity: 'error',
+      summary: 'Item is unavailable',
+      detail: 'Please select an available item',
+      life: 3000,
+    });
     return;
   }
   console.log('Submitting', selectedInventory.value[0]);
+  toast.add({
+    severity: 'success',
+    summary: 'Item submitted',
+    detail: `${selectedInventory.value[0].name} has been submitted`,
+    life: 3000,
+  });
 }
 
 // fetch data when the view is created
@@ -307,7 +336,8 @@ main .card {
   gap: 1rem;
 }
 
-.justify-center {
+.submit-btn {
+  display: flex;
   justify-content: center;
 }
 
