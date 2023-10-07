@@ -41,8 +41,8 @@ import Menubar from 'primevue/menubar';
 import { useUserStore } from '@/store';
 import navbarItems from '@/config/navbarItems';
 
-const store = useUserStore();
-const { isAdmin } = storeToRefs(store);
+const userStore = useUserStore();
+const { isAdmin } = storeToRefs(userStore);
 
 const items = ref(navbarItems);
 const rightAlignedCount = ref(2);
@@ -52,7 +52,7 @@ function assignClasses(props, context) {
   if (context.index === props.items.length - rightAlignedCount.value) {
     classList.push('right-aligned');
   }
-  if (context.item.item.label === 'Admin' && !isAdmin.value) {
+  if (context.item.item.label === 'Admin' && !isAdmin) {
     // hide admin menu item if not admin
     classList.push('hidden-menuitem');
   }

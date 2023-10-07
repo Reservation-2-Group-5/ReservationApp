@@ -2,7 +2,9 @@
   <div class="app">
     <NavBar class="navbar" />
     <main class="router">
-      <router-view class="routes" />
+      <div class="routes">
+        <router-view />
+      </div>
     </main>
   </div>
 </template>
@@ -15,30 +17,21 @@ import NavBar from '@/components/NavBar.vue';
 .app {
   min-height: 100vh;
   max-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .router {
-  height: calc(100vh - 64px);
-  width: 100vw;
+  height: calc(100vh - 104px);
+  margin: 20px;
+  overflow: hidden;
   display: flex;
 }
 
 .routes {
-  display: flex;
-  margin: 20px;
+  flex: 1;
+  height: 100%;
 }
-
-/* .navbar {
-  height: 64px;
-}
-
-main.router {
-  position: absolute;
-  top: 64px;
-  bottom: 0;
-  width: 100vw;
-  overflow-y: scroll;
-} */
 </style>

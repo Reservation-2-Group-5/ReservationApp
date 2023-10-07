@@ -1,14 +1,12 @@
 <template>
-  <main>
-    <Card v-if="isAdmin">
-      <template #title>
-        Admin Panel
-      </template>
-      <template #content>
-        <p>Admin Panel</p>
-      </template>
-    </Card>
-  </main>
+  <Card v-if="isAdmin" class="card">
+    <template #title>
+      Admin Panel
+    </template>
+    <template #content>
+      <p>Admin Panel</p>
+    </template>
+  </Card>
 </template>
 
 <script setup>
@@ -24,16 +22,14 @@ const router = useRouter();
 
 // redirect to home if not admin
 onBeforeMount(() => {
-  if (!isAdmin.value) {
+  if (!isAdmin) {
     router.push('/');
   }
 });
 </script>
 
 <style scoped>
-main {
-  display: flex;
-  flex-direction: column;
-  width: 100vw;
+.card {
+  height: 100%;
 }
 </style>

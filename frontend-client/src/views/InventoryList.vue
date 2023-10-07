@@ -1,116 +1,114 @@
 <template>
-  <main>
-    <Toast />
-    <div class="card">
-      <DataTable
-        :loading="loading"
-        v-model:selection="selectedInventory"
-        v-model:filters="filters"
-        filterDisplay="menu"
-        :value="inventory"
-        dataKey="id"
-        @update:selection="clearSelection"
-        :metaKeySelection="false"
-        paginator
-        removableSort
-        scrollable
-        scrollHeight="flex"
-        :rows="10"
-        paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        :rowsPerPageOptions="[5, 10, 25]"
-        currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
-        :globalFilterFields="['name', 'description', 'category', 'location', 'status']"
-        tableStyle="min-width: 50rem;"
-        class="inventory-table">
-        <template #header>
-          <div class="flex flex-wrap align-items-center justify-content-between gap-2">
-            <span class="text-xl text-900 font-bold">Inventory</span>
-            <div class="right-header-buttons">
-              <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter" />
-              <span class="p-input-icon-left">
-                <i class="pi pi-search" />
-                <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
-              </span>
-              <Button icon="pi pi-refresh" raised @click="fetchData(dataLocation)" severity="secondary" />
-            </div>
-          </div>
-        </template>
-        <template #empty v-if="!loading">No items found.</template>
-        <Column selectionMode="multiple" />
-        <Column header="Image">
-          <template #body="{ data }">
-            <ImageColumn :img="data.image" />
-          </template>
-        </Column>
-        <Column field="name" header="Name" sortable>
-          <template #body="{ data }">
-            {{ data.name }}
-          </template>
-          <template #filter="{ filterModel }">
+  <Toast />
+  <div class="card">
+    <DataTable
+      :loading="loading"
+      v-model:selection="selectedInventory"
+      v-model:filters="filters"
+      filterDisplay="menu"
+      :value="inventory"
+      dataKey="id"
+      @update:selection="clearSelection"
+      :metaKeySelection="false"
+      paginator
+      removableSort
+      scrollable
+      scrollHeight="flex"
+      :rows="10"
+      paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+      :rowsPerPageOptions="[5, 10, 25]"
+      currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
+      :globalFilterFields="['name', 'description', 'category', 'location', 'status']"
+      tableStyle="min-width: 50rem;"
+      class="inventory-table">
+      <template #header>
+        <div class="flex flex-wrap align-items-center justify-content-between gap-2">
+          <span class="text-xl text-900 font-bold">Inventory</span>
+          <div class="right-header-buttons">
+            <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter" />
             <span class="p-input-icon-left">
               <i class="pi pi-search" />
-              <AutoComplete v-model="filterModel.value" :suggestions="filteredItems" @complete="searchItems" :virtualScrollerOptions="{ itemSize: 38, style: 'overflow-x: hidden' }" dropdown />
+              <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
             </span>
-          </template>
-        </Column>
-        <Column field="description" header="Description">
-          <template #body="{ data }">
-            {{ data.description }}
-          </template>
-          <template #filter="{ filterModel }">
-            <span class="p-input-icon-left">
-              <i class="pi pi-search" />
-              <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Search by description" />
-            </span>
-          </template>
-        </Column>
-        <Column header="Category" sortable filterField="category" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }">
-          <template #body="{ data }">
-            {{ data.category }}
-          </template>
-          <template #filter="{ filterModel }">
-            <MultiSelect v-model="filterModel.value" :options="categories" placeholder="Any" class="p-column-filter" />
-          </template>
-        </Column>
-        <Column field="pTag" header="P-Tag" sortable />
-        <Column field="location" header="Location" sortable :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }">
-          <template #body="{ data }">
-            {{ data.location }}
-          </template>
-          <template #filter="{ filterModel }">
-            <MultiSelect v-model="filterModel.value" :options="locations" placeholder="Any" class="p-column-filter" />
-          </template>
-        </Column>
-        <Column field="date" filterField="date" header="Date" dataType="date" :showFilterOperator="false" style="min-width: 13rem" sortable>
-          <template #body="{ data }">
-            {{ formatDate(data.date) }}
-          </template>
-          <template #filter="{ filterModel }">
-            <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :maxDate="new Date()" :minDate="new Date('9 October 1963')" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
-          </template>
-        </Column>
-        <Column field="status" header="Status" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1">
-          <template #body="{ data }">
-            <Tag
-              :value="data.status"
-              :severity="getSeverity(data.status)" />
-          </template>
-          <template #filter="{ filterModel }">
-            <Dropdown v-model="filterModel.value" :options="statuses" placeholder="Select One" class="p-column-filter" showClear>
-              <template #option="{ option }">
-                <Tag :value="option" :severity="getSeverity(option)" />
-              </template>
-            </Dropdown>
-          </template>
-        </Column>
-        <template #paginatorend>
-          <div class="submit-btn">
-            <Button type="submit" icon="pi pi-check-square" label="Submit" @click.prevent="submitSelection" />
+            <Button icon="pi pi-refresh" raised @click="fetchData(dataLocation)" severity="secondary" />
           </div>
+        </div>
+      </template>
+      <template #empty v-if="!loading">No items found.</template>
+      <Column selectionMode="multiple" />
+      <Column header="Image">
+        <template #body="{ data }">
+          <ImageColumn :img="data.image" />
         </template>
-      </DataTable>
-    </div>
-  </main>
+      </Column>
+      <Column field="name" header="Name" sortable>
+        <template #body="{ data }">
+          {{ data.name }}
+        </template>
+        <template #filter="{ filterModel }">
+          <span class="p-input-icon-left">
+            <i class="pi pi-search" />
+            <AutoComplete v-model="filterModel.value" :suggestions="filteredItems" @complete="searchItems" :virtualScrollerOptions="{ itemSize: 38, style: 'overflow-x: hidden' }" dropdown />
+          </span>
+        </template>
+      </Column>
+      <Column field="description" header="Description">
+        <template #body="{ data }">
+          {{ data.description }}
+        </template>
+        <template #filter="{ filterModel }">
+          <span class="p-input-icon-left">
+            <i class="pi pi-search" />
+            <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Search by description" />
+          </span>
+        </template>
+      </Column>
+      <Column header="Category" sortable filterField="category" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }">
+        <template #body="{ data }">
+          {{ data.category }}
+        </template>
+        <template #filter="{ filterModel }">
+          <MultiSelect v-model="filterModel.value" :options="categories" placeholder="Any" class="p-column-filter" />
+        </template>
+      </Column>
+      <Column field="pTag" header="P-Tag" sortable />
+      <Column field="location" header="Location" sortable :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }">
+        <template #body="{ data }">
+          {{ data.location }}
+        </template>
+        <template #filter="{ filterModel }">
+          <MultiSelect v-model="filterModel.value" :options="locations" placeholder="Any" class="p-column-filter" />
+        </template>
+      </Column>
+      <Column field="date" filterField="date" header="Date" dataType="date" :showFilterOperator="false" style="min-width: 13rem" sortable>
+        <template #body="{ data }">
+          {{ formatDate(data.date) }}
+        </template>
+        <template #filter="{ filterModel }">
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :maxDate="new Date()" :minDate="new Date('9 October 1963')" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
+        </template>
+      </Column>
+      <Column field="status" header="Status" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1">
+        <template #body="{ data }">
+          <Tag
+            :value="data.status"
+            :severity="getSeverity(data.status)" />
+        </template>
+        <template #filter="{ filterModel }">
+          <Dropdown v-model="filterModel.value" :options="statuses" placeholder="Select One" class="p-column-filter" showClear>
+            <template #option="{ option }">
+              <Tag :value="option" :severity="getSeverity(option)" />
+            </template>
+          </Dropdown>
+        </template>
+      </Column>
+      <template #paginatorend>
+        <div class="submit-btn">
+          <Button type="submit" icon="pi pi-check-square" label="Submit" @click.prevent="submitSelection" />
+        </div>
+      </template>
+    </DataTable>
+  </div>
 </template>
 
 <script setup>
@@ -327,13 +325,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-main {
-  flex: 1;
-}
-
-main .card {
-  flex: 1;
-  display: flex;
+.card {
+  height: 100%;
 }
 
 .inventory-table {

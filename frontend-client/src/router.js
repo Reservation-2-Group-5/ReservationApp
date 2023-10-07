@@ -42,7 +42,7 @@ router.beforeEach((to) => {
     };
   }
   const userStore = useUserStore();
-  if (to.meta.requiresAuth && !userStore.isLoggedIn.value) {
+  if (to.meta.requiresAuth && !userStore.isLoggedIn) {
     return {
       name: 'Login',
       query: {
@@ -50,7 +50,7 @@ router.beforeEach((to) => {
       },
     };
   }
-  if (to.meta.requiresAdmin && !userStore.isAdmin.value) {
+  if (to.meta.requiresAdmin && !userStore.isAdmin) {
     return {
       name: 'Home',
     };
