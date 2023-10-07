@@ -10,6 +10,18 @@ const routes = [{
   path: '/inventory',
   name: 'Inventory',
   component: InventoryList,
+}, {
+  path: '/spaces',
+  name: 'Spaces',
+  component: null,
+}, {
+  path: '/login',
+  name: 'Login',
+  component: null,
+}, {
+  path: '/admin',
+  name: 'Admin',
+  component: null,
 }];
 
 const router = createRouter({
