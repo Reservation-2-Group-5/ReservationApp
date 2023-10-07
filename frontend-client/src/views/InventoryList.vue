@@ -18,7 +18,7 @@
         :rows="10"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[5, 10, 25]"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} items"
+        currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
         :globalFilterFields="['name', 'description', 'category', 'location', 'status']"
         tableStyle="min-width: 50rem;"
         class="inventory-table">
@@ -31,7 +31,7 @@
                 <i class="pi pi-search" />
                 <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
               </span>
-              <Button icon="pi pi-refresh" rounded raised @click="fetchData" />
+              <Button icon="pi pi-refresh" raised @click="fetchData" severity="secondary" />
             </div>
           </div>
         </template>
@@ -272,13 +272,15 @@ const searchItems = (event) => {
 };
 
 // submit the selected items to the server
+const toastDuration = 5000;
+
 function submitSelection() {
   if (!selectedInventory.value?.length) {
     toast.add({
-      severity: 'warn',
+      severity: 'error',
       summary: 'No items selected',
       detail: 'Please select at least one item to submit',
-      life: 3000,
+      life: toastDuration,
     });
     return;
   }
@@ -287,7 +289,7 @@ function submitSelection() {
       severity: 'warn',
       summary: 'Multiple items selected',
       detail: 'Only one item can be submitted at a time',
-      life: 3000,
+      life: toastDuration,
     });
     return;
   }
@@ -296,7 +298,7 @@ function submitSelection() {
       severity: 'error',
       summary: 'Item is unavailable',
       detail: 'Please select an available item',
-      life: 3000,
+      life: toastDuration,
     });
     return;
   }
@@ -305,7 +307,7 @@ function submitSelection() {
     severity: 'success',
     summary: 'Item submitted',
     detail: `${selectedInventory.value[0].name} has been submitted`,
-    life: 3000,
+    life: toastDuration,
   });
 }
 
