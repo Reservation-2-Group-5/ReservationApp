@@ -18,13 +18,20 @@
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[5, 10, 25]"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} items"
-        :globalFilterFields="['status']"
+        :globalFilterFields="['name', 'description', 'category', 'location', 'status']"
         tableStyle="min-width: 50rem;"
         class="inventory-table">
         <template #header>
           <div class="flex flex-wrap align-items-center justify-content-between gap-2">
             <span class="text-xl text-900 font-bold">Inventory</span>
-            <Button icon="pi pi-refresh" rounded raised @click="fetchData" />
+            <div class="right-header-buttons">
+              <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter" />
+              <span class="p-input-icon-left">
+                <i class="pi pi-search" />
+                <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+              </span>
+              <Button icon="pi pi-refresh" rounded raised @click="fetchData" />
+            </div>
           </div>
         </template>
         <template #empty>No items found.</template>
@@ -95,13 +102,23 @@
             </Dropdown>
           </template>
         </Column>
+        <template #footer>
+          <div class="flex justify-center">
+            <Button type="button" icon="pi pi-check-square" label="Submit" @click="submitSelection" />
+          </div>
+        </template>
       </DataTable>
     </div>
   </main>
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import {
+  onMounted,
+  ref,
+  computed,
+  onBeforeMount,
+} from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Tag from 'primevue/tag';
@@ -125,33 +142,37 @@ const locations = ref([]);
 const categories = ref([]);
 
 // set the default filter operators and constraints
-const filters = ref({
-  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  status: {
-    operator: FilterOperator.OR,
-    constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-  },
-  location: {
-    operator: FilterOperator.OR,
-    constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-  },
-  date: {
-    operator: FilterOperator.AND,
-    constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
-  },
-  category: {
-    operator: FilterOperator.OR,
-    constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
-  },
-  name: {
-    operator: FilterOperator.AND,
-    constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }],
-  },
-  description: {
-    operator: FilterOperator.OR,
-    constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
-  },
-});
+const filters = ref();
+
+function initFilters() {
+  filters.value = {
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    status: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    location: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    date: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
+    },
+    category: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
+    },
+    name: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }],
+    },
+    description: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
+    },
+  };
+}
 
 // create a list of unique filter options
 function createUniqueFilterOptions(data, field) {
@@ -164,6 +185,14 @@ function setFilters(newInventory) {
   locations.value = createUniqueFilterOptions(newInventory, 'location');
   categories.value = createUniqueFilterOptions(newInventory, 'category');
 }
+
+// clear the filters
+const clearFilter = () => {
+  initFilters();
+};
+onBeforeMount(() => {
+  initFilters();
+});
 
 // fetch the data from the server or test data file
 // and set the reactive variables
@@ -237,6 +266,20 @@ const searchItems = (event) => {
   filteredItems.value = filteredItemsList;
 };
 
+// submit the selected items to the server
+function submitSelection() {
+  if (!selectedInventory.value?.length) return;
+  if (selectedInventory.value.length > 1) {
+    console.log('multiple items selected');
+    return;
+  }
+  if (selectedInventory.value[0].status === 'unavailable') {
+    console.log('item is unavailable');
+    return;
+  }
+  console.log('Submitting', selectedInventory.value[0]);
+}
+
 // fetch data when the view is created
 onMounted(async () => {
   const location = (isDev) ? 'testData.json' : 'db';
@@ -256,6 +299,16 @@ main .card {
 
 .inventory-table {
   flex: 1;
+}
+
+.right-header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.justify-center {
+  justify-content: center;
 }
 
 :deep([data-pc-section="headercheckboxwrapper"]) {
