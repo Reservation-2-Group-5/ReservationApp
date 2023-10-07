@@ -16,7 +16,7 @@
         scrollable
         scrollHeight="flex"
         :rows="10"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[5, 10, 25]"
         currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
         :globalFilterFields="['name', 'description', 'category', 'location', 'status']"
@@ -31,11 +31,11 @@
                 <i class="pi pi-search" />
                 <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
               </span>
-              <Button icon="pi pi-refresh" raised @click="fetchData" severity="secondary" />
+              <Button icon="pi pi-refresh" raised @click="fetchData(dataLocation)" severity="secondary" />
             </div>
           </div>
         </template>
-        <template #empty>No items found.</template>
+        <template #empty v-if="!loading">No items found.</template>
         <Column selectionMode="multiple" />
         <Column header="Image">
           <template #body="{ data }">
@@ -103,7 +103,7 @@
             </Dropdown>
           </template>
         </Column>
-        <template #footer>
+        <template #paginatorend>
           <div class="submit-btn">
             <Button type="submit" icon="pi pi-check-square" label="Submit" @click.prevent="submitSelection" />
           </div>
@@ -132,19 +132,26 @@ import AutoComplete from 'primevue/autocomplete';
 import Toast from 'primevue/toast';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { useToast } from 'primevue/usetoast';
+import { storeToRefs } from 'pinia';
 import ImageColumn from '@/components/inventory-list/ImageColumn.vue';
+import { useInventoryStore } from '@/store';
 import { isDev } from '@/utils/env';
 import sleep from '@/utils/sleep';
 
+// get the inventory store
+const inventoryStore = useInventoryStore();
+const { inventory } = storeToRefs(inventoryStore);
+
+// initialize the toast notifications
 const toast = useToast();
 
 // create the reactive variables
-const inventory = ref([]);
 const loading = ref(false);
 const selectedInventory = ref();
 const statuses = ref([]);
 const locations = ref([]);
 const categories = ref([]);
+const dataLocation = ref('');
 
 // set the default filter operators and constraints
 const filters = ref();
@@ -185,7 +192,7 @@ function createUniqueFilterOptions(data, field) {
 }
 
 // set the filter options for the dropdowns
-function setFilters(newInventory) {
+function setFilterOptions(newInventory) {
   statuses.value = createUniqueFilterOptions(newInventory, 'status');
   locations.value = createUniqueFilterOptions(newInventory, 'location');
   categories.value = createUniqueFilterOptions(newInventory, 'category');
@@ -202,7 +209,7 @@ onBeforeMount(() => {
 // fetch the data from the server or test data file
 // and set the reactive variables
 async function fetchData(location) {
-  inventory.value = [];
+  inventoryStore.setInventory([]);
   loading.value = true;
   if (isDev) {
     // simulate a fetch delay
@@ -214,9 +221,9 @@ async function fetchData(location) {
     for (const item of json) {
       item.date = new Date(item.date);
     }
-    inventory.value = json;
+    inventoryStore.setInventory(json);
     loading.value = false;
-    setFilters(json);
+    setFilterOptions(json);
   } catch (err) {
     console.error(err);
   }
@@ -314,6 +321,7 @@ function submitSelection() {
 // fetch data when the view is created
 onMounted(async () => {
   const location = (isDev) ? 'testData.json' : 'db';
+  dataLocation.value = location;
   await fetchData(location);
 });
 </script>
@@ -345,5 +353,9 @@ main .card {
 
 :deep([data-pc-section="headercheckboxwrapper"]) {
   display: none;
+}
+
+:deep(.p-paginator-right-content) {
+  margin-left: 20px;
 }
 </style>

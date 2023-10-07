@@ -36,14 +36,16 @@
 
 <script setup>
 import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
 import Menubar from 'primevue/menubar';
+import { useUserStore } from '@/store';
 import navbarItems from '@/config/navbarItems';
+
+const store = useUserStore();
+const { isAdmin } = storeToRefs(store);
 
 const items = ref(navbarItems);
 const rightAlignedCount = ref(2);
-
-// TODO: get isAdmin from login
-const isAdmin = ref(false);
 
 function assignClasses(props, context) {
   const classList = [];

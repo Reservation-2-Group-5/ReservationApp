@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '@/views/Home.vue';
 import InventoryList from '@/views/InventoryList.vue';
+import AdminPanel from '@/views/AdminPanel.vue';
 
 const routes = [{
   path: '/',
@@ -21,7 +22,7 @@ const routes = [{
 }, {
   path: '/admin',
   name: 'Admin',
-  component: null,
+  component: AdminPanel,
 }];
 
 const router = createRouter({
