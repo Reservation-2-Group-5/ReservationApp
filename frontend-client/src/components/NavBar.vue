@@ -52,7 +52,7 @@ function assignClasses(props, context) {
   if (context.index === props.items.length - rightAlignedCount.value) {
     classList.push('right-aligned');
   }
-  if (context.item.item.label === 'Admin' && !isAdmin) {
+  if (context.item.item.label === 'Admin' && !isAdmin.value) {
     // hide admin menu item if not admin
     classList.push('hidden-menuitem');
   }
