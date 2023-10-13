@@ -18,4 +18,8 @@ export default [{
   label: 'Admin',
   icon: 'pi pi-fw pi-wrench',
   route: '/admin',
+}, {
+  label: 'Logout',
+  icon: 'pi pi-fw pi-user',
+  route: '/logout',
 }];

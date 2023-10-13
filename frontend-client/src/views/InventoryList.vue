@@ -109,6 +109,33 @@
       </template>
     </DataTable>
   </div>
+  <Dialog v-model:visible="dialogVisible" :position="dialogPosition" modal header="Header" :style="{ width: '50vw' }">
+    <template #container="slotProps">
+      <Card class="card">
+        <template #title>
+          Reserving <span class="dialog-item-name">{{ selectedInventory[0].name }}</span>
+          <Divider />
+        </template>
+        <template #content>
+          <div class="dialog-date-selections">
+            <span class="p-float-label">
+              <Calendar v-model="reservationStartDate" inputId="reservation-start-date" dateFormat="mm/dd/yy" showTime hourFormat="12" :minDate="minStartDate" showButtonBar selectionMode="single" showIcon hideOnDateTimeSelect />
+              <label for="reservation-start-date">Reservation Start Date</label>
+            </span>
+            <span class="p-float-label">
+              <Calendar v-model="reservationEndDate" inputId="reservation-end-date" dateFormat="mm/dd/yy" showTime hourFormat="12" :minDate="minEndDate" showButtonBar selectionMode="single" showIcon :disabled="reservationEndDateDisabled" hideOnDateTimeSelect />
+              <label for="reservation-end-date">Reservation End Date</label>
+            </span>
+          </div>
+          <Image :src="`${selectedInventory[0].image}?height=300`" />
+          <div class="dialog-buttons">
+            <Button icon="pi pi-times" label="Cancel" @click="slotProps.onClose" />
+            <Button icon="pi pi-check" label="Confirm" @click="submitReservation(slotProps.onClose)" />
+          </div>
+        </template>
+      </Card>
+    </template>
+  </Dialog>
 </template>
 
 <script setup>
@@ -117,6 +144,7 @@ import {
   ref,
   computed,
   onBeforeMount,
+  watch,
 } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -127,6 +155,10 @@ import Calendar from 'primevue/calendar';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import AutoComplete from 'primevue/autocomplete';
+import Dialog from 'primevue/dialog';
+import Divider from 'primevue/divider';
+import Card from 'primevue/card';
+import Image from 'primevue/image';
 import Toast from 'primevue/toast';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { useToast } from 'primevue/usetoast';
@@ -142,6 +174,7 @@ const { inventory } = storeToRefs(inventoryStore);
 
 // initialize the toast notifications
 const toast = useToast();
+const toastDuration = 5000;
 
 // create the reactive variables
 const loading = ref(false);
@@ -150,6 +183,11 @@ const statuses = ref([]);
 const locations = ref([]);
 const categories = ref([]);
 const dataLocation = ref('');
+const dialogVisible = ref(false);
+const dialogPosition = ref('top');
+const reservationStartDate = ref();
+const reservationEndDate = ref();
+const reservationEndDateDisabled = ref(true);
 
 // set the default filter operators and constraints
 const filters = ref();
@@ -276,9 +314,7 @@ const searchItems = (event) => {
   filteredItems.value = filteredItemsList;
 };
 
-// submit the selected items to the server
-const toastDuration = 5000;
-
+// submit the selected row
 function submitSelection() {
   if (!selectedInventory.value?.length) {
     toast.add({
@@ -307,14 +343,72 @@ function submitSelection() {
     });
     return;
   }
-  console.log('Submitting', selectedInventory.value[0]);
+
+  // open the dialog to set the reservation dates
+  dialogVisible.value = true;
+}
+
+// submit the reservation to the server
+function submitReservation(closeDialog) {
+  if (!reservationStartDate.value || !reservationEndDate.value) {
+    toast.add({
+      severity: 'error',
+      summary: 'Invalid date',
+      detail: 'Please select a valid date',
+      life: toastDuration,
+    });
+    return;
+  }
+  if (reservationStartDate.value > reservationEndDate.value) {
+    toast.add({
+      severity: 'error',
+      summary: 'Invalid date range',
+      detail: 'Please select a valid date range',
+      life: toastDuration,
+    });
+    return;
+  }
+
+  // TODO: submit reservation to server
   toast.add({
     severity: 'success',
-    summary: 'Item submitted',
-    detail: `${selectedInventory.value[0].name} has been submitted`,
+    summary: 'Reservation submitted',
+    detail: `Your ${selectedInventory.value[0].name} reservation has been submitted`,
     life: toastDuration,
   });
+  selectedInventory.value[0].status = 'unavailable';
+  selectedInventory.value = [];
+  closeDialog();
 }
+
+// round minutes of date to the nearest hour
+function roundMinutes(date) {
+  date.setHours(date.getHours() + Math.ceil(date.getMinutes() / 60));
+  date.setMinutes(0, 0, 0); // Resets seconds and milliseconds to 0
+  return date;
+}
+
+// set the min start date to the current date rounded to the nearest hour
+const minStartDate = ref(roundMinutes(new Date()));
+minStartDate.value = roundMinutes(minStartDate.value);
+
+// set the min end date to the min start date + 1 day
+const minEndDate = ref(new Date());
+minEndDate.value.setDate(minStartDate.value.getDate() + 1);
+minEndDate.value = roundMinutes(minEndDate.value);
+
+// disable the end date input until the start date is selected
+// and set the min end date to the selected start date + 1 day
+watch(reservationStartDate, (newVal) => {
+  if (newVal && newVal instanceof Date) {
+    reservationEndDateDisabled.value = false;
+    minEndDate.value = new Date(newVal);
+    minEndDate.value.setDate(minEndDate.value.getDate() + 1);
+    minEndDate.value = roundMinutes(minEndDate.value);
+  } else {
+    reservationEndDateDisabled.value = true;
+  }
+});
 
 // fetch data when the view is created
 onMounted(async () => {
@@ -350,5 +444,31 @@ onMounted(async () => {
 
 :deep(.p-paginator-right-content) {
   margin-left: 20px;
+}
+
+:deep(.p-card-content) {
+  padding: 0;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.dialog-item-name {
+  font-style: italic;
+  font-weight: 400;
+  background-color: #111111ff;
+  padding: 0.1rem 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.dialog-date-selections {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  padding-bottom: 1rem;
 }
 </style>
