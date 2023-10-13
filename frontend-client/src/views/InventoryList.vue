@@ -38,7 +38,7 @@
       <Column selectionMode="multiple" />
       <Column header="Image">
         <template #body="{ data }">
-          <ImageColumn :img="data.image" />
+          <ImageColumn :data="data" />
         </template>
       </Column>
       <Column field="name" header="Name" sortable>
@@ -135,7 +135,16 @@
               <label for="reservation-end-date">Reservation End Date</label>
             </span>
           </div>
-          <Image :src="`${selectedInventory[0].image}?height=300`" />
+          <div class="dialog-details">
+            <Image :src="`${selectedInventory[0].img}?height=300`" />
+            <div class="dialog-details-inner">
+              <p><span class="bold">Description:</span> {{ selectedInventory[0].description }}</p>
+              <p><span class="bold">Category:</span> {{ selectedInventory[0].category }}</p>
+              <p><span class="bold">Location:</span> {{ selectedInventory[0].location }}</p>
+              <p><span class="bold">Start Date:</span> {{ formatDate(selectedInventory[0].startDate) }}</p>
+              <p><span class="bold">End Date:</span> {{ formatDate(selectedInventory[0].endDate) }}</p>
+            </div>
+          </div>
           <div class="dialog-buttons">
             <Button icon="pi pi-times" label="Cancel" @click="slotProps.onClose" />
             <Button icon="pi pi-check" label="Confirm" @click="submitReservation(slotProps.onClose)" />
@@ -178,6 +187,7 @@ import sleep from '@/utils/sleep';
 
 // get the inventory store
 const inventoryStore = useInventoryStore();
+// const inventoryList = ref([]);
 const { inventory } = storeToRefs(inventoryStore);
 
 // initialize the toast notifications
@@ -266,14 +276,9 @@ async function fetchData(location) {
   try {
     const response = await fetch(location);
     const json = await response.json();
-    for (const item of json) {
-      // convert the date strings to date objects
-      item.startDate = new Date(item.startDate);
-      item.endDate = new Date(item.endDate);
-    }
     inventoryStore.setInventory(json);
     loading.value = false;
-    setFilterOptions(json);
+    setFilterOptions(inventoryStore.inventory);
   } catch (err) {
     console.error(err);
   }
@@ -308,7 +313,7 @@ function clearSelection(event) {
 }
 
 // create a list of item names for the autocomplete
-const itemNames = computed(() => inventory.value.map((item) => item.name));
+const itemNames = computed(() => inventoryStore.inventory.map((item) => item.name));
 const filteredItems = ref([]);
 
 const searchItems = (event) => {
@@ -358,6 +363,7 @@ function submitSelection() {
     return;
   }
 
+  console.log('selectedInventory', selectedInventory.value[0]);
   // open the dialog to set the reservation dates
   dialogVisible.value = true;
 }
@@ -406,9 +412,9 @@ function roundMinutes(date) {
 const minStartDate = ref(roundMinutes(new Date()));
 minStartDate.value = roundMinutes(minStartDate.value);
 
-// set the min end date to the min start date + 1 day
+// set the default min end date to the min start date + 31 days
 const minEndDate = ref(new Date());
-minEndDate.value.setDate(minStartDate.value.getDate() + 1);
+minEndDate.value.setDate(minStartDate.value.getDate() + 31);
 minEndDate.value = roundMinutes(minEndDate.value);
 
 // disable the end date input until the start date is selected
@@ -483,6 +489,38 @@ onMounted(async () => {
   display: flex;
   flex-direction: row;
   gap: 1.5rem;
-  padding-bottom: 1rem;
+  padding: 0.5rem 0 1.5rem 0;
+}
+
+.dialog-details {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+}
+
+:deep(.dialog-details img) {
+  width: 300px;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+
+.dialog-details-inner {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1rem;
+  background-color: var(--surface-d);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dialog-details-inner p {
+  margin-top: 0;
+}
+
+.bold {
+  font-weight: 600;
 }
 </style>

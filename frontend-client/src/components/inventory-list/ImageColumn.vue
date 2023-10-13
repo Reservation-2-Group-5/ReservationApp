@@ -1,5 +1,4 @@
 <template>
-
   <div class="card flex justify-content-center">
     <Image alt="" preview>
       <template #image>
@@ -22,22 +21,25 @@
 </template>
 
 <script setup>
-import { ref, defineProps, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import Image from 'primevue/image';
+import { useInventoryStore } from '@/store';
+
+const inventoryStore = useInventoryStore();
 
 const props = defineProps({
-  img: {
-    type: String,
+  data: {
+    type: Object,
     required: true,
   },
 });
 
-// TEMP: just for the cat img example
+// TODO: temporary just for the cat img example
 async function fetchCat() {
   const d = Date.now();
-  const cat = await fetch(`${props.img}?json=true&d=${d}`);
+  const cat = await fetch(`${props.data.image}?json=true&d=${d}`);
   const json = await cat.json();
-  return props.img + json.url.replace('/cat', '');
+  return props.data.image + json.url.replace('/cat', '');
 }
 const catImg = ref('');
 onMounted(async () => {
@@ -47,6 +49,11 @@ onMounted(async () => {
     console.error('err', err);
     catImg.value = 'https://images.placeholders.dev/';
   }
+});
+watch(catImg, (newVal) => {
+  if (!newVal) return;
+  if (!props.data?.id) return;
+  inventoryStore.setItemImg(props.data.id, newVal);
 });
 </script>
 
