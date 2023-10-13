@@ -27,7 +27,7 @@ onMounted(async () => {
     name: 'John Doe',
     role: 'admin',
   });
-  router.push('/');
+  router.back();
 });
 </script>
 
