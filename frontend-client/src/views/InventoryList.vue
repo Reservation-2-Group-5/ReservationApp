@@ -80,12 +80,20 @@
           <MultiSelect v-model="filterModel.value" :options="locations" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
-      <Column field="date" filterField="date" header="Date" dataType="date" :showFilterOperator="false" style="min-width: 13rem" sortable>
+      <Column field="startDate" filterField="startDate" header="Start Date" dataType="date" :showFilterOperator="false" style="min-width: 13rem" sortable>
         <template #body="{ data }">
-          {{ formatDate(data.date) }}
+          {{ formatDate(data.startDate) }}
         </template>
         <template #filter="{ filterModel }">
-          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :maxDate="new Date()" :minDate="new Date('9 October 1963')" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :maxDate="new Date()" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
+        </template>
+      </Column>
+      <Column field="endDate" filterField="endDate" header="End Date" dataType="date" :showFilterOperator="false" style="min-width: 13rem" sortable>
+        <template #body="{ data }">
+          {{ formatDate(data.endDate) }}
+        </template>
+        <template #filter="{ filterModel }">
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :minDate="new Date('9 October 1963')" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
         </template>
       </Column>
       <Column field="status" header="Status" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1">
@@ -203,9 +211,13 @@ function initFilters() {
       operator: FilterOperator.OR,
       constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
     },
-    date: {
+    startDate: {
       operator: FilterOperator.AND,
       constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
+    },
+    endDate: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_BEFORE }],
     },
     category: {
       operator: FilterOperator.OR,
@@ -255,7 +267,9 @@ async function fetchData(location) {
     const response = await fetch(location);
     const json = await response.json();
     for (const item of json) {
-      item.date = new Date(item.date);
+      // convert the date strings to date objects
+      item.startDate = new Date(item.startDate);
+      item.endDate = new Date(item.endDate);
     }
     inventoryStore.setInventory(json);
     loading.value = false;
