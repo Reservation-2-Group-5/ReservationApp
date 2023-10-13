@@ -393,11 +393,13 @@ function submitReservation(closeDialog) {
   toast.add({
     severity: 'success',
     summary: 'Reservation submitted',
-    detail: `Your ${selectedInventory.value[0].name} reservation has been submitted`,
+    detail: `Your ${selectedInventory.value[0].name} reservation has been submitted for ${formatDate(reservationStartDate.value)} to ${formatDate(reservationEndDate.value)}}`,
     life: toastDuration,
   });
   selectedInventory.value[0].status = 'unavailable';
   selectedInventory.value = [];
+  reservationStartDate.value = null;
+  reservationEndDate.value = null;
   closeDialog();
 }
 
