@@ -27,7 +27,12 @@ onMounted(async () => {
     name: 'John Doe',
     role: 'admin',
   });
-  router.back();
+  const to = router.currentRoute.value.query?.redirect ?? null;
+  if (to) {
+    router.push(to);
+  } else {
+    router.back();
+  }
 });
 </script>
 

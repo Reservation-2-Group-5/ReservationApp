@@ -73,6 +73,15 @@ export const useReservationStore = defineStore('reservation', () => {
 
   const setReservations = (newReservations) => {
     reservations.value = newReservations;
+    for (const item of reservations.value) {
+      item.img = item.img ?? '';
+      if (item.startDate && typeof item.startDate === 'string') {
+        item.startDate = new Date(item.startDate);
+      }
+      if (item.endDate && typeof item.endDate === 'string') {
+        item.endDate = new Date(item.endDate);
+      }
+    }
   };
 
   const fetchReservations = async () => {

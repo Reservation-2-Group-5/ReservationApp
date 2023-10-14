@@ -49,12 +49,14 @@ const navbar = ref(null);
 
 function assignClasses(props, context) {
   const classList = [];
-  if (context.item.item.label === 'Login' || context.item.item.label === 'Admin') {
+  const { label } = context.item.item;
+  if (label === 'Login' || label === 'Admin'
+    || (label === 'Logout' && isLoggedIn.value && !isAdmin.value)) {
     classList.push('right-aligned');
   }
-  if ((context.item.item.label === 'Admin' && !isAdmin.value)
-    || (context.item.item.label === 'Logout' && !isLoggedIn.value)
-    || (context.item.item.label === 'Login' && isLoggedIn.value)) {
+  if ((label === 'Admin' && !isAdmin.value)
+    || (label === 'Logout' && !isLoggedIn.value)
+    || (label === 'Login' && isLoggedIn.value)) {
     classList.push('hidden-menuitem');
   }
   return classList.join(' ');
@@ -62,7 +64,7 @@ function assignClasses(props, context) {
 
 async function unsetClick() {
   await sleep(100);
-  navbar.value.container.querySelectorAll('.p-focus').forEach(async (el) => {
+  navbar.value.container.querySelectorAll('.p-focus').forEach((el) => {
     el.classList.remove('p-focus');
   });
 }
