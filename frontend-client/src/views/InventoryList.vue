@@ -30,7 +30,7 @@
               <i class="pi pi-search" />
               <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
             </span>
-            <Button icon="pi pi-refresh" raised @click="fetchData(dataLocation)" severity="secondary" />
+            <Button icon="pi pi-refresh" raised @click="fetchData" severity="secondary" />
           </div>
         </div>
       </template>
@@ -146,7 +146,7 @@
             </div>
           </div>
           <div class="dialog-buttons">
-            <Button icon="pi pi-times" label="Cancel" @click="slotProps.onClose" />
+            <Button icon="pi pi-times" label="Cancel" @click="closeDialog(slotProps.onClose)" />
             <Button icon="pi pi-check" label="Confirm" @click="submitReservation(slotProps.onClose)" />
           </div>
         </template>
@@ -182,8 +182,8 @@ import { useToast } from 'primevue/usetoast';
 import { storeToRefs } from 'pinia';
 import ImageColumn from '@/components/inventory-list/ImageColumn.vue';
 import { useInventoryStore } from '@/store';
-import { isDev } from '@/utils/env';
-import sleep from '@/utils/sleep';
+// import { isDev } from '@/utils/env';
+// import sleep from '@/utils/sleep';
 
 // get the inventory store
 const inventoryStore = useInventoryStore();
@@ -200,7 +200,6 @@ const selectedInventory = ref();
 const statuses = ref([]);
 const locations = ref([]);
 const categories = ref([]);
-const dataLocation = ref('');
 const dialogVisible = ref(false);
 const dialogPosition = ref('top');
 const reservationStartDate = ref();
@@ -266,22 +265,15 @@ onBeforeMount(() => {
 
 // fetch the data from the server or test data file
 // and set the reactive variables
-async function fetchData(location) {
-  inventoryStore.setInventory([]);
+async function fetchData() {
   loading.value = true;
-  if (isDev) {
-    // simulate a fetch delay
-    await sleep(1000);
-  }
   try {
-    const response = await fetch(location);
-    const json = await response.json();
-    inventoryStore.setInventory(json);
-    loading.value = false;
+    await inventoryStore.fetchInventory();
     setFilterOptions(inventoryStore.inventory);
   } catch (err) {
     console.error(err);
   }
+  loading.value = false;
 }
 
 // format the date to a readable format
@@ -368,8 +360,16 @@ function submitSelection() {
   dialogVisible.value = true;
 }
 
+// close the dialog box
+function closeDialog(closeFn) {
+  dialogVisible.value = false;
+  reservationStartDate.value = null;
+  reservationEndDate.value = null;
+  closeFn();
+}
+
 // submit the reservation to the server
-function submitReservation(closeDialog) {
+function submitReservation(closeFn) {
   if (!reservationStartDate.value || !reservationEndDate.value) {
     toast.add({
       severity: 'error',
@@ -398,9 +398,7 @@ function submitReservation(closeDialog) {
   });
   selectedInventory.value[0].status = 'unavailable';
   selectedInventory.value = [];
-  reservationStartDate.value = null;
-  reservationEndDate.value = null;
-  closeDialog();
+  closeDialog(closeFn);
 }
 
 // round minutes of date to the nearest hour
@@ -434,9 +432,7 @@ watch(reservationStartDate, (newVal) => {
 
 // fetch data when the view is created
 onMounted(async () => {
-  const location = (isDev) ? 'testData.json' : 'db';
-  dataLocation.value = location;
-  await fetchData(location);
+  await fetchData();
 });
 </script>
 

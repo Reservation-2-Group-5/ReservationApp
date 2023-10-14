@@ -1,22 +1,6 @@
 <template>
   <div class="card flex justify-content-center">
-    <Image alt="" preview>
-      <template #image>
-        <img
-          :src="`${catImg}?height=50`"
-          alt=""
-          class="w-6rem shadow-2 border-round"
-          loading="lazy"
-          height="50" />
-      </template>
-      <template #preview>
-        <img
-          :src="`${catImg}?height=500`"
-          alt=""
-          loading="lazy"
-          height="500" />
-      </template>
-    </Image>
+    <Image alt="" :src="catImg" preview loading="lazy" height="50" />
   </div>
 </template>
 
