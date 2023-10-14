@@ -214,7 +214,7 @@ function initFilters() {
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     status: {
       operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      constraints: [{ value: 'available', matchMode: FilterMatchMode.EQUALS }],
     },
     location: {
       operator: FilterOperator.OR,

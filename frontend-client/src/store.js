@@ -81,6 +81,9 @@ export const useReservationStore = defineStore('reservation', () => {
       if (item.endDate && typeof item.endDate === 'string') {
         item.endDate = new Date(item.endDate);
       }
+      if (item.requestedDate && typeof item.requestedDate === 'string') {
+        item.requestedDate = new Date(item.requestedDate);
+      }
     }
   };
 

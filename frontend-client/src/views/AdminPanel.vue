@@ -20,7 +20,7 @@
       class="reservations-table">
       <template #header>
         <div class="flex flex-wrap align-items-center justify-content-between gap-2">
-          <span class="text-xl text-900 font-bold">Pending Reservations</span>
+          <span class="text-xl text-900 font-bold">Admin - Pending Reservations</span>
           <div class="right-header-buttons">
             <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter" />
             <span class="p-input-icon-left">
@@ -92,18 +92,30 @@
           <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :minDate="new Date('9 October 1963')" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
         </template>
       </Column>
-      <Column field="status" header="Status" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1">
+      <Column header="Requested By" filterField="requestedBy" :showFilterMatchModes="false" :showFilterOperator="false" :filterMenuStyle="{ width: '14rem' }" style="min-width: 11rem">
         <template #body="{ data }">
-          <Tag
-            :value="data.status"
-            :severity="getSeverity(data.status)" />
+          <div class="flex align-items-center gap-2">
+            <Avatar image="https://images.placeholders.dev/?width=32&height=32" size="small" shape="circle" />
+            <span>{{ data.requestedBy }}</span>
+          </div>
         </template>
         <template #filter="{ filterModel }">
-          <Dropdown v-model="filterModel.value" :options="statuses" placeholder="Select One" class="p-column-filter" showClear>
-            <template #option="{ option }">
-              <Tag :value="option" :severity="getSeverity(option)" />
+          <MultiSelect v-model="filterModel.value" :options="requestees" placeholder="Any" class="p-column-filter">
+            <template #option="slotProps">
+              <div class="flex align-items-center gap-2">
+                <Avatar image="https://images.placeholders.dev/?width=32&height=32" size="small" shape="circle" />
+                <span>{{ slotProps.option }}</span>
+              </div>
             </template>
-          </Dropdown>
+          </MultiSelect>
+        </template>
+      </Column>
+      <Column field="requestedDate" filterField="requestedDate" header="Requested On" dataType="date" :showFilterOperator="false" style="min-width: 13rem" sortable>
+        <template #body="{ data }">
+          {{ formatDate(data.requestedDate) }}
+        </template>
+        <template #filter="{ filterModel }">
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :minDate="new Date('9 October 1963')" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
         </template>
       </Column>
       <Column header="Actions">
@@ -144,9 +156,8 @@ import InputText from 'primevue/inputtext';
 import AutoComplete from 'primevue/autocomplete';
 import MultiSelect from 'primevue/multiselect';
 import Calendar from 'primevue/calendar';
-import Dropdown from 'primevue/dropdown';
 import Toast from 'primevue/toast';
-import Tag from 'primevue/tag';
+import Avatar from 'primevue/avatar';
 import ImageColumn from '@/components/inventory-list/ImageColumn.vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { useRouter } from 'vue-router';
@@ -168,6 +179,7 @@ const loading = ref(false);
 const statuses = ref([]);
 const locations = ref([]);
 const categories = ref([]);
+const requestees = ref([]);
 
 // set the default filter operators and constraints
 const filters = ref();
@@ -203,6 +215,14 @@ function initFilters() {
       operator: FilterOperator.OR,
       constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
     },
+    requestedBy: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    requestedDate: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
+    },
   };
 }
 
@@ -213,9 +233,21 @@ function createUniqueFilterOptions(data, field) {
 
 // set the filter options for the dropdowns
 function setFilterOptions(newReservations) {
-  statuses.value = createUniqueFilterOptions(newReservations, 'status');
-  locations.value = createUniqueFilterOptions(newReservations, 'location');
-  categories.value = createUniqueFilterOptions(newReservations, 'category');
+  const lists = {
+    status: statuses,
+    location: locations,
+    category: categories,
+    requestedBy: requestees,
+  };
+
+  Object.keys(lists).forEach((key) => {
+    lists[key].value = createUniqueFilterOptions(newReservations, key);
+  });
+
+  // statuses.value = createUniqueFilterOptions(newReservations, 'status');
+  // locations.value = createUniqueFilterOptions(newReservations, 'location');
+  // categories.value = createUniqueFilterOptions(newReservations, 'category');
+  // requestees.value = createUniqueFilterOptions(newReservations, 'requestedBy');
 }
 
 // clear the filters
@@ -245,14 +277,6 @@ function formatDate(date) {
     hour: 'numeric',
     minute: 'numeric',
   });
-}
-
-// set the color of the status tag
-function getSeverity(status) {
-  if (status === 'unavailable') {
-    return 'danger';
-  }
-  return 'success';
 }
 
 // create a list of item names for the autocomplete
