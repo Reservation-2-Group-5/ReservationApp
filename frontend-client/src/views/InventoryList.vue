@@ -22,17 +22,12 @@
       tableStyle="min-width: 50rem;"
       class="inventory-table">
       <template #header>
-        <div class="flex flex-wrap align-items-center justify-content-between gap-2">
-          <span class="text-xl text-900 font-bold">Inventory</span>
-          <div class="right-header-buttons">
-            <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter" />
-            <span class="p-input-icon-left">
-              <i class="pi pi-search" />
-              <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
-            </span>
-            <Button icon="pi pi-refresh" raised @click="fetchData" severity="secondary" />
-          </div>
-        </div>
+        <HeaderPanel
+          name="Inventory List"
+          :filters="filters"
+          :fetchData="fetchData"
+          :clearFilter="clearFilter"
+          @inputUpdate="filters['global'].value = $event" />
       </template>
       <template #empty v-if="!loading">No items found.</template>
       <Column selectionMode="multiple" />
@@ -181,6 +176,7 @@ import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { useToast } from 'primevue/usetoast';
 import { storeToRefs } from 'pinia';
 import ImageColumn from '@/components/inventory-list/ImageColumn.vue';
+import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
 import { useInventoryStore } from '@/store';
 // import { isDev } from '@/utils/env';
 // import sleep from '@/utils/sleep';
@@ -443,12 +439,6 @@ onMounted(async () => {
 
 .inventory-table {
   flex: 1;
-}
-
-.right-header-buttons {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
 }
 
 .submit-btn {

@@ -15,21 +15,16 @@
       paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
       :rowsPerPageOptions="[5, 10, 25]"
       currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
-      :globalFilterFields="['name', 'description', 'category', 'location', 'status']"
+      :globalFilterFields="['name', 'description', 'category', 'location', 'requestedBy']"
       tableStyle="min-width: 50rem;"
       class="reservations-table">
       <template #header>
-        <div class="flex flex-wrap align-items-center justify-content-between gap-2">
-          <span class="text-xl text-900 font-bold">Admin - Pending Reservations</span>
-          <div class="right-header-buttons">
-            <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter" />
-            <span class="p-input-icon-left">
-              <i class="pi pi-search" />
-              <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
-            </span>
-            <Button icon="pi pi-refresh" raised @click="fetchData" severity="secondary" />
-          </div>
-        </div>
+        <HeaderPanel
+          name="Admin - Pending Reservations"
+          :filters="filters"
+          :fetchData="fetchData"
+          :clearFilter="clearFilter"
+          @inputUpdate="filters['global'].value = $event" />
       </template>
       <template #empty v-if="!loading">No items found.</template>
       <Column header="Image">
@@ -94,18 +89,12 @@
       </Column>
       <Column header="Requested By" filterField="requestedBy" :showFilterMatchModes="false" :showFilterOperator="false" :filterMenuStyle="{ width: '14rem' }" style="min-width: 11rem">
         <template #body="{ data }">
-          <div class="flex align-items-center gap-2">
-            <Avatar image="https://images.placeholders.dev/?width=32&height=32" size="small" shape="circle" />
-            <span>{{ data.requestedBy }}</span>
-          </div>
+          <ProfileName :name="data.requestedBy" image="https://images.placeholders.dev/?width=32&height=32" />
         </template>
         <template #filter="{ filterModel }">
           <MultiSelect v-model="filterModel.value" :options="requestees" placeholder="Any" class="p-column-filter">
             <template #option="slotProps">
-              <div class="flex align-items-center gap-2">
-                <Avatar image="https://images.placeholders.dev/?width=32&height=32" size="small" shape="circle" />
-                <span>{{ slotProps.option }}</span>
-              </div>
+              <ProfileName :name="slotProps.option" image="https://images.placeholders.dev/?width=32&height=32" />
             </template>
           </MultiSelect>
         </template>
@@ -157,13 +146,14 @@ import AutoComplete from 'primevue/autocomplete';
 import MultiSelect from 'primevue/multiselect';
 import Calendar from 'primevue/calendar';
 import Toast from 'primevue/toast';
-import Avatar from 'primevue/avatar';
 import ImageColumn from '@/components/inventory-list/ImageColumn.vue';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { useRouter } from 'vue-router';
 import { useUserStore, useReservationStore } from '@/store';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue/usetoast';
+import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
+import ProfileName from '@/components/inventory-list/ProfileName.vue';
 
 const userStore = useUserStore();
 const reservationStore = useReservationStore();
@@ -342,12 +332,6 @@ onMounted(async () => {
 
 .reservations-table {
   flex: 1;
-}
-
-.right-header-buttons {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
 }
 
 .admin-btns {
