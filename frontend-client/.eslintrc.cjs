@@ -20,6 +20,7 @@ module.exports = {
       ],
     }],
     'vuejs-accessibility/click-events-have-key-events': 'off',
+    'no-param-reassign': ['error', { props: false }],
     'no-restricted-syntax': ['error', {
       selector: 'ForInStatement',
       message: 'for..in loops iterate over the entire prototype chain, which is virtually never what you want. Use Object.{keys,values,entries}, and iterate over the resulting array.',

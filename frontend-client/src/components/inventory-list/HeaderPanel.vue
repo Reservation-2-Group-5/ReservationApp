@@ -2,7 +2,7 @@
   <div class="flex flex-wrap align-items-center justify-content-between gap-2">
     <span class="text-xl text-900 font-bold">{{ name }}</span>
     <div class="right-header-buttons">
-      <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter" />
+      <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilters" />
       <span class="p-input-icon-left">
         <i class="pi pi-search" />
         <InputText :modelValue="filters['global'].value" @update:modelValue="$emit('inputUpdate', $event)" placeholder="Keyword Search" />
@@ -25,7 +25,7 @@ defineProps({
     type: Function,
     required: true,
   },
-  clearFilter: {
+  clearFilters: {
     type: Function,
     required: true,
   },

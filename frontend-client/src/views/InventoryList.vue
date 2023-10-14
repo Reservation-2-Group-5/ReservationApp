@@ -25,8 +25,8 @@
         <HeaderPanel
           name="Inventory List"
           :filters="filters"
-          :fetchData="fetchData"
-          :clearFilter="clearFilter"
+          :fetchData="requestData"
+          :clearFilters="clearFilter"
           @inputUpdate="filters['global'].value = $event" />
       </template>
       <template #empty v-if="!loading">No items found.</template>
@@ -43,7 +43,7 @@
         <template #filter="{ filterModel }">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <AutoComplete v-model="filterModel.value" :suggestions="filteredItems" @complete="searchItems" :virtualScrollerOptions="{ itemSize: 38, style: 'overflow-x: hidden' }" dropdown />
+            <AutoComplete v-model="filterModel.value" :suggestions="filteredItems" @complete="search" :virtualScrollerOptions="{ itemSize: 38, style: 'overflow-x: hidden' }" dropdown />
           </span>
         </template>
       </Column>
@@ -172,14 +172,18 @@ import Divider from 'primevue/divider';
 import Card from 'primevue/card';
 import Image from 'primevue/image';
 import Toast from 'primevue/toast';
-import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { useToast } from 'primevue/usetoast';
 import { storeToRefs } from 'pinia';
 import ImageColumn from '@/components/inventory-list/ImageColumn.vue';
 import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
 import { useInventoryStore } from '@/store';
-// import { isDev } from '@/utils/env';
-// import sleep from '@/utils/sleep';
+import {
+  formatDate,
+  initFilters,
+  fetchData,
+  clearFilters,
+  searchItems,
+} from '@/utils/inventory';
 
 // get the inventory store
 const inventoryStore = useInventoryStore();
@@ -204,84 +208,17 @@ const reservationEndDateDisabled = ref(true);
 
 // set the default filter operators and constraints
 const filters = ref();
-
-function initFilters() {
-  filters.value = {
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    status: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: 'available', matchMode: FilterMatchMode.EQUALS }],
-    },
-    location: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-    },
-    startDate: {
-      operator: FilterOperator.AND,
-      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
-    },
-    endDate: {
-      operator: FilterOperator.AND,
-      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_BEFORE }],
-    },
-    category: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
-    },
-    name: {
-      operator: FilterOperator.AND,
-      constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }],
-    },
-    description: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
-    },
-  };
-}
-
-// create a list of unique filter options
-function createUniqueFilterOptions(data, field) {
-  return [...new Set(data.map((item) => item[field]))];
-}
-
-// set the filter options for the dropdowns
-function setFilterOptions(newInventory) {
-  statuses.value = createUniqueFilterOptions(newInventory, 'status');
-  locations.value = createUniqueFilterOptions(newInventory, 'location');
-  categories.value = createUniqueFilterOptions(newInventory, 'category');
-}
+const lists = {
+  status: statuses,
+  location: locations,
+  category: categories,
+};
 
 // clear the filters
-const clearFilter = () => {
-  initFilters();
-};
+const clearFilter = () => clearFilters(filters);
 onBeforeMount(() => {
-  initFilters();
+  initFilters(filters);
 });
-
-// fetch the data from the server or test data file
-// and set the reactive variables
-async function fetchData() {
-  loading.value = true;
-  try {
-    await inventoryStore.fetchInventory();
-    setFilterOptions(inventoryStore.inventory);
-  } catch (err) {
-    console.error(err);
-  }
-  loading.value = false;
-}
-
-// format the date to a readable format
-function formatDate(date) {
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-  });
-}
 
 // set the color of the status tag
 function getSeverity(status) {
@@ -304,22 +241,9 @@ function clearSelection(event) {
 const itemNames = computed(() => inventoryStore.inventory.map((item) => item.name));
 const filteredItems = ref([]);
 
-const searchItems = (event) => {
-  // in final app, make request to db with query and return filtered results
-  // for testing filter at client side
-  const { query } = event;
-  const filteredItemsList = [];
-
-  for (let i = 0; i < itemNames.value.length; i += 1) {
-    const item = itemNames.value[i];
-
-    if (item.toLowerCase().indexOf(query.toLowerCase()) === 0) {
-      filteredItemsList.push(item);
-    }
-  }
-
-  filteredItems.value = filteredItemsList;
-};
+function search(event) {
+  searchItems(event, itemNames, filteredItems);
+}
 
 // submit the selected row
 function submitSelection() {
@@ -426,9 +350,14 @@ watch(reservationStartDate, (newVal) => {
   }
 });
 
+async function requestData() {
+  const fetchFn = inventoryStore.fetchInventory;
+  await fetchData(fetchFn, inventoryStore.inventory, loading, lists);
+}
+
 // fetch data when the view is created
 onMounted(async () => {
-  await fetchData();
+  await requestData();
 });
 </script>
 
