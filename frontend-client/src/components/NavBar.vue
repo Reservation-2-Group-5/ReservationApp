@@ -6,7 +6,8 @@
         menuItem: ({ props, context }) => ({
           class: assignClasses(props, context),
         }),
-      }">
+      }"
+      ref="navbar">
       <template #start>
         <img alt="logo" src="https://primefaces.org/cdn/primevue/images/logo.svg" height="40" class="mr-2 logo" />
       </template>
@@ -18,16 +19,14 @@
           root,
           hasSubmenu,
         }">
-        <router-link v-if="item.route" v-slot="routerProps" :to="item.route" custom>
-          <a :href="routerProps.href" v-bind="props.action">
-            <span v-if="item.icon" v-bind="props.icon" />
-            <span v-bind="props.label">{{ label }}</span>
-          </a>
+        <router-link v-if="item.route" :to="item.route" class="p-menuitem-link" @mouseup="unsetClick">
+          <span v-if="item.icon" v-bind="props.icon" />
+          <span v-bind="props.label">{{ label }}</span>
         </router-link>
         <a v-else :href="item.url" :target="item.target" v-bind="props.action">
           <span v-if="item.icon" v-bind="props.icon" />
           <span v-bind="props.label">{{ label }}</span>
-          <span :class="[hasSubmenu && (root ? 'pi pi-fw pi-angle-down' : 'pi pi-fw pi-angle-right')]" v-bind="props.submenuicon" />
+          <span :class="[hasSubmenu && (root ? 'pi pi-fw pi-angle-down' : 'pi pi-fw pi-angle-right')]" v-bind="props.submenuicon" /> -->
         </a>
       </template>
     </Menubar>
@@ -40,23 +39,34 @@ import { storeToRefs } from 'pinia';
 import Menubar from 'primevue/menubar';
 import { useUserStore } from '@/store';
 import navbarItems from '@/config/navbarItems';
+import sleep from '@/utils/sleep';
 
 const userStore = useUserStore();
-const { isAdmin } = storeToRefs(userStore);
+const { isAdmin, isLoggedIn } = storeToRefs(userStore);
 
 const items = ref(navbarItems);
-const rightAlignedCount = ref(2);
+const navbar = ref(null);
 
 function assignClasses(props, context) {
   const classList = [];
-  if (context.index === props.items.length - rightAlignedCount.value) {
+  const { label } = context.item.item;
+  if (label === 'Login' || label === 'Admin'
+    || (label === 'Logout' && isLoggedIn.value && !isAdmin.value)) {
     classList.push('right-aligned');
   }
-  if (context.item.item.label === 'Admin' && !isAdmin) {
-    // hide admin menu item if not admin
+  if ((label === 'Admin' && !isAdmin.value)
+    || (label === 'Logout' && !isLoggedIn.value)
+    || (label === 'Login' && isLoggedIn.value)) {
     classList.push('hidden-menuitem');
   }
   return classList.join(' ');
+}
+
+async function unsetClick() {
+  await sleep(100);
+  navbar.value.container.querySelectorAll('.p-focus').forEach((el) => {
+    el.classList.remove('p-focus');
+  });
 }
 </script>
 
@@ -80,10 +90,20 @@ function assignClasses(props, context) {
 }
 
 :deep(.right-aligned) {
+  content: '';
   margin-left: auto;
 }
 
 :deep(.hidden-menuitem) {
   display: none;
+}
+
+:deep(.p-menuitem.p-focus > .p-menuitem-content) {
+  background-color: #00000000;
+}
+
+:deep(.p-menuitem.p-focus > .p-menuitem-content .p-menuitem-text),
+:deep(.p-menuitem.p-focus > .p-menuitem-content .p-menuitem-icon) {
+  color: var(--text-color-secondary);
 }
 </style>

@@ -8,7 +8,6 @@ import PrimeVue from 'primevue/config';
 import ToastService from 'primevue/toastservice';
 import router from '@/router';
 import App from '@/App.vue';
-import { useUserStore } from '@/store';
 
 createApp(App)
   .use(router)
@@ -16,11 +15,3 @@ createApp(App)
   .use(PrimeVue)
   .use(ToastService)
   .mount('#app');
-
-// TODO: Remove this once we have a login page
-const userStore = useUserStore();
-userStore.setUser({
-  id: 1,
-  name: 'John Doe',
-  role: 'admin',
-});

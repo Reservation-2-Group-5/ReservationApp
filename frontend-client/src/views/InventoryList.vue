@@ -22,23 +22,18 @@
       tableStyle="min-width: 50rem;"
       class="inventory-table">
       <template #header>
-        <div class="flex flex-wrap align-items-center justify-content-between gap-2">
-          <span class="text-xl text-900 font-bold">Inventory</span>
-          <div class="right-header-buttons">
-            <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter" />
-            <span class="p-input-icon-left">
-              <i class="pi pi-search" />
-              <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
-            </span>
-            <Button icon="pi pi-refresh" raised @click="fetchData(dataLocation)" severity="secondary" />
-          </div>
-        </div>
+        <HeaderPanel
+          name="Inventory List"
+          :filters="filters"
+          :fetchData="requestData"
+          :clearFilters="clearFilter"
+          @inputUpdate="filters['global'].value = $event" />
       </template>
       <template #empty v-if="!loading">No items found.</template>
       <Column selectionMode="multiple" />
       <Column header="Image">
         <template #body="{ data }">
-          <ImageColumn :img="data.image" />
+          <ImageColumn :data="data" />
         </template>
       </Column>
       <Column field="name" header="Name" sortable>
@@ -48,7 +43,7 @@
         <template #filter="{ filterModel }">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <AutoComplete v-model="filterModel.value" :suggestions="filteredItems" @complete="searchItems" :virtualScrollerOptions="{ itemSize: 38, style: 'overflow-x: hidden' }" dropdown />
+            <AutoComplete v-model="filterModel.value" :suggestions="filteredItems" @complete="search" :virtualScrollerOptions="{ itemSize: 38, style: 'overflow-x: hidden' }" dropdown />
           </span>
         </template>
       </Column>
@@ -80,12 +75,20 @@
           <MultiSelect v-model="filterModel.value" :options="locations" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
-      <Column field="date" filterField="date" header="Date" dataType="date" :showFilterOperator="false" style="min-width: 13rem" sortable>
+      <Column field="startDate" filterField="startDate" header="Start Date" dataType="date" :showFilterOperator="false" style="min-width: 13rem" sortable>
         <template #body="{ data }">
-          {{ formatDate(data.date) }}
+          {{ formatDate(data.startDate) }}
         </template>
         <template #filter="{ filterModel }">
-          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :maxDate="new Date()" :minDate="new Date('9 October 1963')" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :maxDate="new Date()" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
+        </template>
+      </Column>
+      <Column field="endDate" filterField="endDate" header="End Date" dataType="date" :showFilterOperator="false" style="min-width: 13rem" sortable>
+        <template #body="{ data }">
+          {{ formatDate(data.endDate) }}
+        </template>
+        <template #filter="{ filterModel }">
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :minDate="new Date('9 October 1963')" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
         </template>
       </Column>
       <Column field="status" header="Status" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1">
@@ -109,6 +112,42 @@
       </template>
     </DataTable>
   </div>
+  <Dialog v-model:visible="dialogVisible" :position="dialogPosition" modal header="Header" :style="{ width: '50vw' }">
+    <template #container="slotProps">
+      <Card class="card">
+        <template #title>
+          Reserving <span class="dialog-item-name">{{ selectedInventory[0].name }}</span>
+          <Divider />
+        </template>
+        <template #content>
+          <div class="dialog-date-selections">
+            <span class="p-float-label">
+              <Calendar v-model="reservationStartDate" inputId="reservation-start-date" dateFormat="mm/dd/yy" showTime hourFormat="12" :minDate="minStartDate" showButtonBar selectionMode="single" showIcon hideOnDateTimeSelect />
+              <label for="reservation-start-date">Reservation Start Date</label>
+            </span>
+            <span class="p-float-label">
+              <Calendar v-model="reservationEndDate" inputId="reservation-end-date" dateFormat="mm/dd/yy" showTime hourFormat="12" :minDate="minEndDate" showButtonBar selectionMode="single" showIcon :disabled="reservationEndDateDisabled" hideOnDateTimeSelect />
+              <label for="reservation-end-date">Reservation End Date</label>
+            </span>
+          </div>
+          <div class="dialog-details">
+            <Image :src="`${selectedInventory[0].img}?height=300`" />
+            <div class="dialog-details-inner">
+              <p><span class="bold">Description:</span> {{ selectedInventory[0].description }}</p>
+              <p><span class="bold">Category:</span> {{ selectedInventory[0].category }}</p>
+              <p><span class="bold">Location:</span> {{ selectedInventory[0].location }}</p>
+              <p><span class="bold">Start Date:</span> {{ formatDate(selectedInventory[0].startDate) }}</p>
+              <p><span class="bold">End Date:</span> {{ formatDate(selectedInventory[0].endDate) }}</p>
+            </div>
+          </div>
+          <div class="dialog-buttons">
+            <Button icon="pi pi-times" label="Cancel" @click="closeDialog(slotProps.onClose)" />
+            <Button icon="pi pi-check" label="Confirm" @click="submitReservation(slotProps.onClose)" />
+          </div>
+        </template>
+      </Card>
+    </template>
+  </Dialog>
 </template>
 
 <script setup>
@@ -117,6 +156,7 @@ import {
   ref,
   computed,
   onBeforeMount,
+  watch,
 } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -127,21 +167,32 @@ import Calendar from 'primevue/calendar';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import AutoComplete from 'primevue/autocomplete';
+import Dialog from 'primevue/dialog';
+import Divider from 'primevue/divider';
+import Card from 'primevue/card';
+import Image from 'primevue/image';
 import Toast from 'primevue/toast';
-import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import { useToast } from 'primevue/usetoast';
 import { storeToRefs } from 'pinia';
 import ImageColumn from '@/components/inventory-list/ImageColumn.vue';
+import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
 import { useInventoryStore } from '@/store';
-import { isDev } from '@/utils/env';
-import sleep from '@/utils/sleep';
+import {
+  formatDate,
+  initFilters,
+  fetchData,
+  clearFilters,
+  searchItems,
+} from '@/utils/inventory';
 
 // get the inventory store
 const inventoryStore = useInventoryStore();
+// const inventoryList = ref([]);
 const { inventory } = storeToRefs(inventoryStore);
 
 // initialize the toast notifications
 const toast = useToast();
+const toastDuration = 5000;
 
 // create the reactive variables
 const loading = ref(false);
@@ -149,94 +200,25 @@ const selectedInventory = ref();
 const statuses = ref([]);
 const locations = ref([]);
 const categories = ref([]);
-const dataLocation = ref('');
+const dialogVisible = ref(false);
+const dialogPosition = ref('top');
+const reservationStartDate = ref();
+const reservationEndDate = ref();
+const reservationEndDateDisabled = ref(true);
 
 // set the default filter operators and constraints
 const filters = ref();
-
-function initFilters() {
-  filters.value = {
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    status: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-    },
-    location: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-    },
-    date: {
-      operator: FilterOperator.AND,
-      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
-    },
-    category: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
-    },
-    name: {
-      operator: FilterOperator.AND,
-      constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }],
-    },
-    description: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
-    },
-  };
-}
-
-// create a list of unique filter options
-function createUniqueFilterOptions(data, field) {
-  return [...new Set(data.map((item) => item[field]))];
-}
-
-// set the filter options for the dropdowns
-function setFilterOptions(newInventory) {
-  statuses.value = createUniqueFilterOptions(newInventory, 'status');
-  locations.value = createUniqueFilterOptions(newInventory, 'location');
-  categories.value = createUniqueFilterOptions(newInventory, 'category');
-}
+const lists = {
+  status: statuses,
+  location: locations,
+  category: categories,
+};
 
 // clear the filters
-const clearFilter = () => {
-  initFilters();
-};
+const clearFilter = () => clearFilters(filters);
 onBeforeMount(() => {
-  initFilters();
+  initFilters(filters);
 });
-
-// fetch the data from the server or test data file
-// and set the reactive variables
-async function fetchData(location) {
-  inventoryStore.setInventory([]);
-  loading.value = true;
-  if (isDev) {
-    // simulate a fetch delay
-    await sleep(1000);
-  }
-  try {
-    const response = await fetch(location);
-    const json = await response.json();
-    for (const item of json) {
-      item.date = new Date(item.date);
-    }
-    inventoryStore.setInventory(json);
-    loading.value = false;
-    setFilterOptions(json);
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-// format the date to a readable format
-function formatDate(date) {
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-  });
-}
 
 // set the color of the status tag
 function getSeverity(status) {
@@ -256,29 +238,14 @@ function clearSelection(event) {
 }
 
 // create a list of item names for the autocomplete
-const itemNames = computed(() => inventory.value.map((item) => item.name));
+const itemNames = computed(() => inventoryStore.inventory.map((item) => item.name));
 const filteredItems = ref([]);
 
-const searchItems = (event) => {
-  // in final app, make request to db with query and return filtered results
-  // for testing filter at client side
-  const { query } = event;
-  const filteredItemsList = [];
+function search(event) {
+  searchItems(event, itemNames, filteredItems);
+}
 
-  for (let i = 0; i < itemNames.value.length; i += 1) {
-    const item = itemNames.value[i];
-
-    if (item.toLowerCase().indexOf(query.toLowerCase()) === 0) {
-      filteredItemsList.push(item);
-    }
-  }
-
-  filteredItems.value = filteredItemsList;
-};
-
-// submit the selected items to the server
-const toastDuration = 5000;
-
+// submit the selected row
 function submitSelection() {
   if (!selectedInventory.value?.length) {
     toast.add({
@@ -307,20 +274,90 @@ function submitSelection() {
     });
     return;
   }
-  console.log('Submitting', selectedInventory.value[0]);
+
+  console.log('selectedInventory', selectedInventory.value[0]);
+  // open the dialog to set the reservation dates
+  dialogVisible.value = true;
+}
+
+// close the dialog box
+function closeDialog(closeFn) {
+  dialogVisible.value = false;
+  reservationStartDate.value = null;
+  reservationEndDate.value = null;
+  closeFn();
+}
+
+// submit the reservation to the server
+function submitReservation(closeFn) {
+  if (!reservationStartDate.value || !reservationEndDate.value) {
+    toast.add({
+      severity: 'error',
+      summary: 'Invalid date',
+      detail: 'Please select a valid date',
+      life: toastDuration,
+    });
+    return;
+  }
+  if (reservationStartDate.value > reservationEndDate.value) {
+    toast.add({
+      severity: 'error',
+      summary: 'Invalid date range',
+      detail: 'Please select a valid date range',
+      life: toastDuration,
+    });
+    return;
+  }
+
+  // TODO: submit reservation to server
   toast.add({
     severity: 'success',
-    summary: 'Item submitted',
-    detail: `${selectedInventory.value[0].name} has been submitted`,
+    summary: 'Reservation submitted',
+    detail: `Your ${selectedInventory.value[0].name} reservation has been submitted for ${formatDate(reservationStartDate.value)} to ${formatDate(reservationEndDate.value)}}`,
     life: toastDuration,
   });
+  selectedInventory.value[0].status = 'unavailable';
+  selectedInventory.value = [];
+  closeDialog(closeFn);
+}
+
+// round minutes of date to the nearest hour
+function roundMinutes(date) {
+  date.setHours(date.getHours() + Math.ceil(date.getMinutes() / 60));
+  date.setMinutes(0, 0, 0); // Resets seconds and milliseconds to 0
+  return date;
+}
+
+// set the min start date to the current date rounded to the nearest hour
+const minStartDate = ref(roundMinutes(new Date()));
+minStartDate.value = roundMinutes(minStartDate.value);
+
+// set the default min end date to the min start date + 31 days
+const minEndDate = ref(new Date());
+minEndDate.value.setDate(minStartDate.value.getDate() + 31);
+minEndDate.value = roundMinutes(minEndDate.value);
+
+// disable the end date input until the start date is selected
+// and set the min end date to the selected start date + 1 day
+watch(reservationStartDate, (newVal) => {
+  if (newVal && newVal instanceof Date) {
+    reservationEndDateDisabled.value = false;
+    minEndDate.value = new Date(newVal);
+    minEndDate.value.setDate(minEndDate.value.getDate() + 1);
+    minEndDate.value = roundMinutes(minEndDate.value);
+  } else {
+    reservationEndDateDisabled.value = true;
+  }
+});
+
+async function requestData() {
+  const fetchFn = inventoryStore.fetchInventory;
+  await fetchData(fetchFn, inventoryStore.inventory, loading, lists);
 }
 
 // fetch data when the view is created
 onMounted(async () => {
-  const location = (isDev) ? 'testData.json' : 'db';
-  dataLocation.value = location;
-  await fetchData(location);
+  await requestData();
 });
 </script>
 
@@ -331,12 +368,6 @@ onMounted(async () => {
 
 .inventory-table {
   flex: 1;
-}
-
-.right-header-buttons {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
 }
 
 .submit-btn {
@@ -350,5 +381,63 @@ onMounted(async () => {
 
 :deep(.p-paginator-right-content) {
   margin-left: 20px;
+}
+
+:deep(.p-card-content) {
+  padding: 0;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.dialog-item-name {
+  font-style: italic;
+  font-weight: 400;
+  background-color: #111111ff;
+  padding: 0.1rem 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.dialog-date-selections {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  padding: 0.5rem 0 1.5rem 0;
+}
+
+.dialog-details {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+}
+
+:deep(.dialog-details img) {
+  width: 300px;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+
+.dialog-details-inner {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1rem;
+  background-color: var(--surface-d);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dialog-details-inner p {
+  margin-top: 0;
+}
+
+.bold {
+  font-weight: 600;
 }
 </style>
