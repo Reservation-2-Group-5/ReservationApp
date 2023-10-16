@@ -61,11 +61,11 @@ export function clearFilters(filters) {
 
 // fetch the data from the server or test data file
 // and set the reactive variables
-export async function fetchData(fetchFn, itemList, loading, filterLists) {
+export async function fetchData(store, loading, filterLists) {
   loading.value = true;
   try {
-    await fetchFn();
-    setFilterOptions(itemList, filterLists);
+    await store.fetchAll();
+    setFilterOptions(store.getAll, filterLists);
   } catch (err) {
     console.error(err);
   }

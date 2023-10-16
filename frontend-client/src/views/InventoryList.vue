@@ -351,8 +351,7 @@ watch(reservationStartDate, (newVal) => {
 });
 
 async function requestData() {
-  const fetchFn = inventoryStore.fetchInventory;
-  await fetchData(fetchFn, inventoryStore.inventory, loading, lists);
+  await fetchData(inventoryStore, loading, lists);
 }
 
 // fetch data when the view is created

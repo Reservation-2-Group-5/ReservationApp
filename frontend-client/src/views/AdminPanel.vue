@@ -216,8 +216,7 @@ function denyReservation(data) {
 }
 
 async function requestData() {
-  const fetchFn = reservationStore.fetchReservations;
-  await fetchData(fetchFn, reservationStore.reservations, loading, lists);
+  await fetchData(reservationStore, loading, lists);
 }
 
 const router = useRouter();

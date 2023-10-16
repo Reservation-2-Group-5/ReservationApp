@@ -23,7 +23,11 @@ async function fetchCat() {
   const d = Date.now();
   const cat = await fetch(`${props.data.image}?json=true&d=${d}`);
   const json = await cat.json();
-  return props.data.image + json.url.replace('/cat', '');
+  if (json?.url) {
+    return props.data.image + json.url.replace('/cat', '');
+  }
+  // eslint-disable-next-line no-underscore-dangle
+  return `${props.data.image}/${json._id}`;
 }
 const catImg = ref('');
 onMounted(async () => {
