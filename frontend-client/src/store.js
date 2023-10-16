@@ -60,11 +60,19 @@ export const useInventoryStore = defineStore('inventory', () => {
     }
   };
 
+  const fetchAll = async () => {
+    await fetchInventory();
+  };
+
+  const getAll = computed(() => inventory.value);
+
   return {
     inventory,
     setInventory,
     setItemImg,
     fetchInventory,
+    fetchAll,
+    getAll,
   };
 });
 
@@ -122,11 +130,19 @@ export const useReservationStore = defineStore('reservation', () => {
     }
   };
 
+  const fetchAll = async () => {
+    await fetchReservations();
+  };
+
+  const getAll = computed(() => reservations.value);
+
   return {
     reservations,
     setReservations,
     fetchReservations,
     approveReservation,
     denyReservation,
+    fetchAll,
+    getAll,
   };
 });
