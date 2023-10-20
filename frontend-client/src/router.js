@@ -15,8 +15,8 @@ const routes = [{
   name: 'Inventory',
   component: InventoryList,
 }, {
-  path: '/spaces',
-  name: 'Spaces',
+  path: '/rooms',
+  name: 'Rooms',
   component: null,
 }, {
   path: '/login',

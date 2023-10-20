@@ -3,22 +3,6 @@ import { FilterMatchMode, FilterOperator } from 'primevue/api';
 export function initFilters(filters) {
   filters.value = {
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    status: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-    },
-    location: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-    },
-    startDate: {
-      operator: FilterOperator.AND,
-      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
-    },
-    endDate: {
-      operator: FilterOperator.AND,
-      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_BEFORE }],
-    },
     category: {
       operator: FilterOperator.OR,
       constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
@@ -27,9 +11,25 @@ export function initFilters(filters) {
       operator: FilterOperator.AND,
       constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }],
     },
-    description: {
+    assignedTo: {
       operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    netId: {
+      operator: FilterOperator.AND,
       constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
+    },
+    location: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    warrantyExpiration: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_BEFORE }],
+    },
+    available: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
     },
     requestedBy: {
       operator: FilterOperator.OR,
@@ -78,8 +78,8 @@ export function formatDate(date) {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
+    // hour: 'numeric',
+    // minute: 'numeric',
   });
 }
 

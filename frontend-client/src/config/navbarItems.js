@@ -7,9 +7,9 @@ export default [{
   icon: 'pi pi-fw pi-list',
   route: '/inventory',
 }, {
-  label: 'Spaces',
-  icon: 'pi pi-fw pi-map',
-  route: '/spaces',
+  label: 'Rooms',
+  icon: 'pi pi-fw pi-building',
+  route: '/rooms',
 }, {
   label: 'Login',
   icon: 'pi pi-fw pi-user',

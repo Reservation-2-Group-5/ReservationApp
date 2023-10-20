@@ -7,7 +7,7 @@
       v-model:filters="filters"
       filterDisplay="menu"
       :value="inventory"
-      dataKey="id"
+      dataKey="tag"
       @update:selection="clearSelection"
       :metaKeySelection="false"
       paginator
@@ -18,7 +18,7 @@
       paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
       :rowsPerPageOptions="[5, 10, 25]"
       currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
-      :globalFilterFields="['name', 'description', 'category', 'location', 'status']"
+      :globalFilterFields="['tag', 'category', 'name', 'assignedTo', 'netId', 'location', 'fundingSource', 'department', 'serialNumber', 'poNumber', 'warrantyExpiration', 'available']"
       tableStyle="min-width: 50rem;"
       class="inventory-table">
       <template #header>
@@ -31,9 +31,13 @@
       </template>
       <template #empty v-if="!loading">No items found.</template>
       <Column selectionMode="multiple" />
-      <Column header="Image">
+      <Column field="tag" header="Tag #" sortable style="min-width: 6rem" />
+      <Column header="Category" sortable filterField="category" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }">
         <template #body="{ data }">
-          <ImageColumn :data="data" />
+          {{ data.category }}
+        </template>
+        <template #filter="{ filterModel }">
+          <MultiSelect v-model="filterModel.value" :options="categories" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
       <Column field="name" header="Name" sortable>
@@ -47,26 +51,18 @@
           </span>
         </template>
       </Column>
-      <Column field="description" header="Description">
+      <Column header="Assigned To" filterField="assignedTo" :showFilterMatchModes="false" :showFilterOperator="false" :filterMenuStyle="{ width: '14rem' }" style="min-width: 11rem" sortable :maxConstraints="1">
         <template #body="{ data }">
-          {{ data.description }}
+          <ProfileName :name="data.assignedTo" :image="placeholderAvatar" :netId="data.netId" />
         </template>
         <template #filter="{ filterModel }">
-          <span class="p-input-icon-left">
-            <i class="pi pi-search" />
-            <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Search by description" />
-          </span>
+          <MultiSelect v-model="filterModel.value" :options="assignees" placeholder="Any" class="p-column-filter">
+            <template #option="slotProps">
+              <ProfileName :name="slotProps.option" :image="placeholderAvatar" />
+            </template>
+          </MultiSelect>
         </template>
       </Column>
-      <Column header="Category" sortable filterField="category" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }">
-        <template #body="{ data }">
-          {{ data.category }}
-        </template>
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="categories" placeholder="Any" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="pTag" header="P-Tag" sortable />
       <Column field="location" header="Location" sortable :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }">
         <template #body="{ data }">
           {{ data.location }}
@@ -75,27 +71,23 @@
           <MultiSelect v-model="filterModel.value" :options="locations" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
-      <Column field="startDate" filterField="startDate" header="Start Date" dataType="date" :showFilterOperator="false" style="min-width: 13rem" sortable>
+      <Column field="fundingSource" header="Funding Source" sortable />
+      <Column field="department" header="Department Ownership" sortable />
+      <Column field="serialNumber" header="Serial #" sortable />
+      <Column field="poNumber" header="PO #" sortable />
+      <Column field="warrantyExpiration" filterField="warrantyExpiration" header="Warranty Expiration" dataType="date" :showFilterOperator="false" sortable>
         <template #body="{ data }">
-          {{ formatDate(data.startDate) }}
+          {{ formatDate(data.warrantyExpiration) }}
         </template>
         <template #filter="{ filterModel }">
-          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :maxDate="new Date()" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
         </template>
       </Column>
-      <Column field="endDate" filterField="endDate" header="End Date" dataType="date" :showFilterOperator="false" style="min-width: 13rem" sortable>
-        <template #body="{ data }">
-          {{ formatDate(data.endDate) }}
-        </template>
-        <template #filter="{ filterModel }">
-          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :minDate="new Date('9 October 1963')" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
-        </template>
-      </Column>
-      <Column field="status" header="Status" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1">
+      <Column field="available" header="Status" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1">
         <template #body="{ data }">
           <Tag
-            :value="data.status"
-            :severity="getSeverity(data.status)" />
+            :value="data.available"
+            :severity="getSeverity(data.available)" />
         </template>
         <template #filter="{ filterModel }">
           <Dropdown v-model="filterModel.value" :options="statuses" placeholder="Select One" class="p-column-filter" showClear>
@@ -116,7 +108,7 @@
     <template #container="slotProps">
       <Card class="card">
         <template #title>
-          Reserving <span class="dialog-item-name">{{ selectedInventory[0].name }}</span>
+          Reserving Item
           <Divider />
         </template>
         <template #content>
@@ -131,13 +123,16 @@
             </span>
           </div>
           <div class="dialog-details">
-            <Image :src="`${selectedInventory[0].img}?height=300`" />
+            <h1>{{ selectedInventory[0].name }}</h1>
             <div class="dialog-details-inner">
-              <p><span class="bold">Description:</span> {{ selectedInventory[0].description }}</p>
               <p><span class="bold">Category:</span> {{ selectedInventory[0].category }}</p>
+              <p><span class="bold">Assigned To:</span> {{ `${selectedInventory[0].assignedTo} (${selectedInventory[0].netId})` }}</p>
               <p><span class="bold">Location:</span> {{ selectedInventory[0].location }}</p>
-              <p><span class="bold">Start Date:</span> {{ formatDate(selectedInventory[0].startDate) }}</p>
-              <p><span class="bold">End Date:</span> {{ formatDate(selectedInventory[0].endDate) }}</p>
+              <p><span class="bold">Funding Source:</span> {{ selectedInventory[0].fundingSource }}</p>
+              <p><span class="bold">Department Ownership:</span> {{ selectedInventory[0].department }}</p>
+              <p><span class="bold">Serial #:</span> {{ selectedInventory[0].serialNumber }}</p>
+              <p><span class="bold">PO #:</span> {{ selectedInventory[0].poNumber }}</p>
+              <p><span class="bold">Warranty Expiration:</span> {{ formatDate(selectedInventory[0].warrantyExpiration) }}</p>
             </div>
           </div>
           <div class="dialog-buttons">
@@ -165,17 +160,15 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Calendar from 'primevue/calendar';
 import MultiSelect from 'primevue/multiselect';
-import InputText from 'primevue/inputtext';
 import AutoComplete from 'primevue/autocomplete';
 import Dialog from 'primevue/dialog';
 import Divider from 'primevue/divider';
 import Card from 'primevue/card';
-import Image from 'primevue/image';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { storeToRefs } from 'pinia';
-import ImageColumn from '@/components/inventory-list/ImageColumn.vue';
 import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
+import ProfileName from '@/components/inventory-list/ProfileName.vue';
 import { useInventoryStore } from '@/store';
 import {
   formatDate,
@@ -184,6 +177,8 @@ import {
   clearFilters,
   searchItems,
 } from '@/utils/inventory';
+
+const placeholderAvatar = 'https://images.placeholders.dev/?width=32&height=32';
 
 // get the inventory store
 const inventoryStore = useInventoryStore();
@@ -200,6 +195,7 @@ const selectedInventory = ref();
 const statuses = ref([]);
 const locations = ref([]);
 const categories = ref([]);
+const assignees = ref([]);
 const dialogVisible = ref(false);
 const dialogPosition = ref('top');
 const reservationStartDate = ref();
@@ -209,9 +205,10 @@ const reservationEndDateDisabled = ref(true);
 // set the default filter operators and constraints
 const filters = ref();
 const lists = {
-  status: statuses,
+  available: statuses,
   location: locations,
   category: categories,
+  assignedTo: assignees,
 };
 
 // clear the filters
@@ -265,6 +262,9 @@ function submitSelection() {
     });
     return;
   }
+
+  /* TODO: if item is unavailable, db request reservation dates to find when it is available
+      and set the min start date to the next available date instead of disallowing */
   if (selectedInventory.value[0].status === 'unavailable') {
     toast.add({
       severity: 'error',
@@ -386,6 +386,10 @@ onMounted(async () => {
   padding: 0;
 }
 
+:deep(.p-paginator-bottom) {
+  border-top: 3px solid var(--surface-d);
+}
+
 .dialog-buttons {
   display: flex;
   justify-content: flex-end;
@@ -410,8 +414,15 @@ onMounted(async () => {
 
 .dialog-details {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 1.5rem;
+}
+
+.dialog-details h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-color);
 }
 
 :deep(.dialog-details img) {
