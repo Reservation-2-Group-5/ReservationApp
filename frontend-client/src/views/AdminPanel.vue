@@ -1,5 +1,5 @@
 <template>
-  <Toast />
+  <Toast ref="toastRef" />
   <div class="card">
     <DataTable
       :loading="loading"
@@ -95,69 +95,59 @@
           <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
         </template>
       </Column>
-      <Column filterField="requestedBy" :showFilterMatchModes="false" :showFilterOperator="false" :filterMenuStyle="{ width: '14rem' }" style="min-width: 11rem" sortable>
-        <template #header>
-          <span class="p-column-title" v-tooltip.top="'Requested By'">Req. By</span>
-        </template>
-        <template #body="{ data }">
-          <ProfileName :name="data.requestedBy" :image="placeholderAvatar" :netId="data.netId" />
-        </template>
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="requestees" placeholder="Any" class="p-column-filter">
-            <template #option="slotProps">
-              <ProfileName :name="slotProps.option" :image="placeholderAvatar" />
-            </template>
-          </MultiSelect>
-        </template>
-      </Column>
-      <Column field="requestedDate" filterField="requestedDate" dataType="date" :showFilterOperator="false" style="min-width: 10rem" sortable>
-        <template #header>
-          <span class="p-column-title" v-tooltip.top="'Requested On'">Req. On</span>
-        </template>
-        <template #body="{ data }">
-          {{ formatDate(data.requestedDate) }}
-        </template>
-        <template #filter="{ filterModel }">
-          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showTime hourFormat="12" :minDate="new Date('9 October 1963')" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
-        </template>
-      </Column>
-      <Column header="Actions">
-        <template #body="{ data }">
-          <div class="admin-btns">
-            <Button
-              type="button"
-              icon="pi pi-check-square"
-              severity="success"
-              label=""
-              size="small"
-              @click="approveReservation(data)" />
-            <Button
-              type="button"
-              icon="pi pi-times"
-              severity="danger"
-              label=""
-              size="small"
-              @click="denyReservation(data)" />
-          </div>
-        </template>
-      </Column>
       <template #expansion="slotProps">
-        <div class="admin-btns">
-          <Button
-            type="button"
-            icon="pi pi-check-square"
-            severity="success"
-            label="Approve"
-            size="small"
-            @click="approveReservation(slotProps.data)" />
-          <Button
-            type="button"
-            icon="pi pi-times"
-            severity="danger"
-            label="Deny"
-            size="small"
-            @click="denyReservation(slotProps.data)" />
-        </div>
+        <h3>Reservation Requests</h3>
+        <DataTable :value="slotProps.data.reservationRequests" style="width: fit-content;" dataKey="id">
+          <Column field="requestedBy" header="Requested By">
+            <template #body="{ data }">
+              <ProfileName
+                :name="data.requestedBy"
+                :image="placeholderAvatar"
+                :netId="data.netId" />
+            </template>
+          </Column>
+          <Column field="requestedDate" dataType="date" style="min-width: 7.6rem" header="Requested On">
+            <template #body="{ data }">
+              {{ formatDate(data.requestedDate) }}
+            </template>
+          </Column>
+          <Column field="requestedStartDate" dataType="date" style="min-width: 7.6rem">
+            <template #header>
+              <span class="p-column-title" v-tooltip.top="'Requested Reservation Starting Date'">Reservation Start</span>
+            </template>
+            <template #body="{ data }">
+              {{ formatDate(data.requestedDate) }}
+            </template>
+          </Column>
+          <Column field="requestedEndDate" dataType="date" style="min-width: 7.6rem">
+            <template #header>
+              <span class="p-column-title" v-tooltip.top="'Requested Reservation Ending Date'">Reservation End</span>
+            </template>
+            <template #body="{ data }">
+              {{ formatDate(data.requestedDate) }}
+            </template>
+          </Column>
+          <Column header="Actions">
+            <template #body="{ data }">
+              <div class="admin-btns">
+                <Button
+                  type="button"
+                  icon="pi pi-check-square"
+                  severity="success"
+                  label="Approve"
+                  size="small"
+                  @click="approveRequest(data, slotProps.data)" />
+                <Button
+                  type="button"
+                  icon="pi pi-times"
+                  severity="danger"
+                  label="Deny"
+                  size="small"
+                  @click="denyRequest(data, slotProps.data)" />
+              </div>
+            </template>
+          </Column>
+        </DataTable>
       </template>
     </DataTable>
   </div>
@@ -190,6 +180,7 @@ import {
   clearFilters,
   searchItems,
 } from '@/utils/inventory';
+import sleep from '@/utils/sleep';
 
 const placeholderAvatar = 'https://images.placeholders.dev/?width=32&height=32';
 
@@ -210,6 +201,7 @@ const categories = ref([]);
 const assignees = ref([]);
 const requestees = ref([]);
 const expandedRows = ref([]);
+const toastRef = ref();
 
 // set the default filter operators and constraints
 const filters = ref();
@@ -230,22 +222,42 @@ function search(event) {
   searchItems(event, itemNames, filteredItems);
 }
 
-function approveReservation(data) {
-  reservationStore.approveReservation(data.id);
+async function checkIfItemRemoved(itemData) {
+  await sleep(1000);
+  const filteredReservations = reservations.value.filter((item) => item.tag === itemData.tag);
+
+  const msg = `${itemData.name} has no more reservation requests.`;
+  // check if toast already exists
+  const existingToast = toastRef.value.messages.some((m) => m.detail === msg);
+  if (existingToast) return;
+
+  if (filteredReservations.length === 0) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Item removed from list',
+      detail: msg,
+      life: toastDuration,
+    });
+  }
+}
+
+function approveRequest(reservation, itemData) {
+  reservationStore.approveRequest(reservation.id);
   toast.add({
     severity: 'success',
     summary: 'Reservation Approved',
-    detail: `${data.name} has been approved.`,
+    detail: `${reservation.requestedBy}'s ${itemData.name} request has been approved.`,
     life: toastDuration,
   });
+  checkIfItemRemoved(itemData);
 }
 
-function denyReservation(data) {
-  reservationStore.denyReservation(data.id);
+function denyRequest(reservation, itemData) {
+  reservationStore.denyRequest(reservation.id);
   toast.add({
     severity: 'warn',
     summary: 'Reservation Denied',
-    detail: `${data.name} has been denied.`,
+    detail: `${reservation.requestedBy}'s ${itemData.name} request has been denied.`,
     life: toastDuration,
   });
 }
