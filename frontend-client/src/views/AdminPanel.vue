@@ -179,8 +179,7 @@ import {
   fetchData,
   clearFilters,
   searchItems,
-} from '@/utils/inventory';
-import sleep from '@/utils/sleep';
+} from '@/utils/dataTableFilters';
 
 const placeholderAvatar = 'https://images.placeholders.dev/?width=32&height=32';
 
