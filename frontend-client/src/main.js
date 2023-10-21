@@ -1,3 +1,4 @@
+import '@/assets/reset.css';
 import '@/assets/main.css';
 import 'primevue/resources/themes/bootstrap4-dark-blue/theme.css';
 import 'primeicons/primeicons.css';
