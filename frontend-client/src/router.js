@@ -50,6 +50,7 @@ router.beforeEach((to) => {
       name: 'Home',
     };
   }
+  document.title = `Reservation App | ${to.name}`;
   const userStore = useUserStore();
   if (to.meta.requiresAuth && !userStore.isLoggedIn) {
     return {
