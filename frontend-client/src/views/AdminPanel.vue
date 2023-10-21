@@ -10,13 +10,15 @@
       dataKey="tag"
       paginator
       removableSort
+      sortField="requestedDate"
+      :sortOrder="1"
       scrollable
       scrollHeight="flex"
       :rows="10"
       paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-      :rowsPerPageOptions="[5, 10, 25]"
+      :rowsPerPageOptions="[10, 25, 50]"
       currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
-      :globalFilterFields="['name', 'category', 'location', 'requestedBy']"
+      :globalFilterFields="['tag', 'category', 'name', 'assignedTo', 'location', 'fundingSource', 'department', 'serialNumber', 'poNumber', 'warrantyExpiration', 'requestedBy', 'requestedDate', 'requestedStartDate', 'requestedEndDate']"
       tableStyle="min-width: 50rem;"
       class="reservations-table">
       <template #header>
@@ -28,9 +30,11 @@
           @inputUpdate="filters['global'].value = $event" />
       </template>
       <template #empty v-if="!loading">No items found.</template>
-      <Column expander style="width: 3rem" />
       <Column field="tag" header="Tag #" sortable style="min-width: 6rem" />
-      <Column header="Category" sortable filterField="category" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }">
+      <Column field="category" sortable filterField="category" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }" style="min-width: 7rem">
+        <template #header>
+          <span class="p-column-title" v-tooltip.top="'Category'">Cat</span>
+        </template>
         <template #body="{ data }">
           {{ data.category }}
         </template>
@@ -38,7 +42,7 @@
           <MultiSelect v-model="filterModel.value" :options="categories" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
-      <Column field="name" header="Name" sortable>
+      <Column field="name" header="Name" sortable style="min-width: 8rem">
         <template #body="{ data }">
           {{ data.name }}
         </template>
@@ -49,7 +53,10 @@
           </span>
         </template>
       </Column>
-      <Column header="Assigned To" filterField="assignedTo" :showFilterMatchModes="false" :showFilterOperator="false" :filterMenuStyle="{ width: '14rem' }" style="min-width: 11rem" sortable :maxConstraints="1">
+      <Column field="assignedTo" filterField="assignedTo" :showFilterMatchModes="false" :showFilterOperator="false" :filterMenuStyle="{ width: '14rem' }" sortable :maxConstraints="1" style="min-width: 9.2rem">
+        <template #header>
+          <span class="p-column-title" v-tooltip.top="'Assigned To'">Asgn To</span>
+        </template>
         <template #body="{ data }">
           <ProfileName :name="data.assignedTo" :image="placeholderAvatar" :netId="data.netId" />
         </template>
@@ -61,7 +68,7 @@
           </MultiSelect>
         </template>
       </Column>
-      <Column field="location" sortable :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }">
+      <Column field="location" sortable :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }" style="min-width: 7rem">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Location'">Loc</span>
         </template>
@@ -72,19 +79,19 @@
           <MultiSelect v-model="filterModel.value" :options="locations" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
-      <Column field="fundingSource" sortable>
+      <Column field="fundingSource" sortable style="min-width: 8rem">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Funding Source'">Fund Src</span>
         </template>
       </Column>
-      <Column field="department" sortable>
+      <Column field="department" sortable style="min-width: 8rem">
         <template #header>
-          <span class="p-column-title" v-tooltip.top="'Department Ownership'">Dept.</span>
+          <span class="p-column-title" v-tooltip.top="'Department Ownership'">Dept</span>
         </template>
       </Column>
       <Column field="serialNumber" header="Serial #" sortable style="min-width: 7rem" />
-      <Column field="poNumber" header="PO #" sortable />
-      <Column field="warrantyExpiration" filterField="warrantyExpiration" dataType="date" :showFilterOperator="false" sortable style="min-width: 10rem">
+      <Column field="poNumber" header="PO #" sortable style="min-width: 7rem" />
+      <Column field="warrantyExpiration" filterField="warrantyExpiration" dataType="date" :showFilterOperator="false" sortable style="min-width: 7rem">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Warranty Expiration'">Wrty Exp</span>
         </template>
@@ -95,60 +102,66 @@
           <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
         </template>
       </Column>
-      <template #expansion="slotProps">
-        <h3>Reservation Requests</h3>
-        <DataTable :value="slotProps.data.reservationRequests" style="width: fit-content;" dataKey="id">
-          <Column field="requestedBy" header="Requested By">
-            <template #body="{ data }">
-              <ProfileName
-                :name="data.requestedBy"
-                :image="placeholderAvatar"
-                :netId="data.netId" />
-            </template>
-          </Column>
-          <Column field="requestedDate" dataType="date" style="min-width: 7.6rem" header="Requested On">
-            <template #body="{ data }">
-              {{ formatDate(data.requestedDate) }}
-            </template>
-          </Column>
-          <Column field="requestedStartDate" dataType="date" style="min-width: 7.6rem">
-            <template #header>
-              <span class="p-column-title" v-tooltip.top="'Requested Reservation Starting Date'">Reservation Start</span>
-            </template>
-            <template #body="{ data }">
-              {{ formatDate(data.requestedDate) }}
-            </template>
-          </Column>
-          <Column field="requestedEndDate" dataType="date" style="min-width: 7.6rem">
-            <template #header>
-              <span class="p-column-title" v-tooltip.top="'Requested Reservation Ending Date'">Reservation End</span>
-            </template>
-            <template #body="{ data }">
-              {{ formatDate(data.requestedDate) }}
-            </template>
-          </Column>
-          <Column header="Actions">
-            <template #body="{ data }">
-              <div class="admin-btns">
-                <Button
-                  type="button"
-                  icon="pi pi-check-square"
-                  severity="success"
-                  label="Approve"
-                  size="small"
-                  @click="approveRequest(data, slotProps.data)" />
-                <Button
-                  type="button"
-                  icon="pi pi-times"
-                  severity="danger"
-                  label="Deny"
-                  size="small"
-                  @click="denyRequest(data, slotProps.data)" />
-              </div>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
+      <Column field="requestedBy" style="min-width: 9.2rem" sortable>
+        <template #header>
+          <span class="p-column-title" v-tooltip.top="'Requested By'">Req By</span>
+        </template>
+        <template #body="{ data }">
+          <ProfileName
+            :name="data.requestedBy"
+            :image="placeholderAvatar"
+            :netId="data.netId" />
+        </template>
+      </Column>
+      <Column field="requestedDate" dataType="date" style="min-width: 6rem" sortable>
+        <template #header>
+          <span class="p-column-title" v-tooltip.top="'Requested On'">Req On</span>
+        </template>
+        <template #body="{ data }">
+          {{ formatDate(data.requestedDate) }}
+        </template>
+      </Column>
+      <Column field="requestedStartDate" dataType="date" style="min-width: 6rem" sortable>
+        <template #header>
+          <span class="p-column-title" v-tooltip.top="'Requested Reservation Starting Date'">Res Start</span>
+        </template>
+        <template #body="{ data }">
+          {{ formatDate(data.requestedDate) }}
+        </template>
+      </Column>
+      <Column field="requestedEndDate" dataType="date" style="min-width: 6rem" sortable>
+        <template #header>
+          <span class="p-column-title" v-tooltip.top="'Requested Reservation Ending Date'">Res End</span>
+        </template>
+        <template #body="{ data }">
+          {{ formatDate(data.requestedDate) }}
+        </template>
+      </Column>
+      <Column>
+        <template #header>
+          <span class="p-column-title" v-tooltip.top="'Actions'">Act</span>
+        </template>
+        <template #body="{ data }">
+          <div class="admin-btns">
+            <Button
+              v-tooltip.left="{ value: 'Accept Request', class: 'custom-success', autoHide: false }"
+              type="button"
+              icon="pi pi-check-square"
+              severity="success"
+              label=""
+              size="small"
+              @click="approveRequest(data)" />
+            <Button
+              v-tooltip.left="{ value: 'Deny Request', class: 'custom-error' }"
+              type="button"
+              icon="pi pi-times"
+              severity="danger"
+              label=""
+              size="small"
+              @click="denyRequest(data)" />
+          </div>
+        </template>
+      </Column>
     </DataTable>
   </div>
 </template>
@@ -181,7 +194,7 @@ import {
   searchItems,
 } from '@/utils/dataTableFilters';
 
-const placeholderAvatar = 'https://images.placeholders.dev/?width=32&height=32';
+const placeholderAvatar = 'https://images.placeholders.dev/?width=48&height=48';
 
 const userStore = useUserStore();
 const reservationStore = useReservationStore();
@@ -221,42 +234,22 @@ function search(event) {
   searchItems(event, itemNames, filteredItems);
 }
 
-async function checkIfItemRemoved(itemData) {
-  await sleep(1000);
-  const filteredReservations = reservations.value.filter((item) => item.tag === itemData.tag);
-
-  const msg = `${itemData.name} has no more reservation requests.`;
-  // check if toast already exists
-  const existingToast = toastRef.value.messages.some((m) => m.detail === msg);
-  if (existingToast) return;
-
-  if (filteredReservations.length === 0) {
-    toast.add({
-      severity: 'warn',
-      summary: 'Item removed from list',
-      detail: msg,
-      life: toastDuration,
-    });
-  }
-}
-
-function approveRequest(reservation, itemData) {
+function approveRequest(reservation) {
   reservationStore.approveRequest(reservation.id);
   toast.add({
     severity: 'success',
     summary: 'Reservation Approved',
-    detail: `${reservation.requestedBy}'s ${itemData.name} request has been approved.`,
+    detail: `${reservation.requestedBy}'s ${reservation.name} request has been approved.`,
     life: toastDuration,
   });
-  checkIfItemRemoved(itemData);
 }
 
-function denyRequest(reservation, itemData) {
+function denyRequest(reservation) {
   reservationStore.denyRequest(reservation.id);
   toast.add({
     severity: 'warn',
     summary: 'Reservation Denied',
-    detail: `${reservation.requestedBy}'s ${itemData.name} request has been denied.`,
+    detail: `${reservation.requestedBy}'s ${reservation.name} request has been denied.`,
     life: toastDuration,
   });
 }
@@ -268,6 +261,7 @@ async function requestData() {
 const router = useRouter();
 
 // redirect to home if not admin
+// should have already been checked by the router, but just in case
 onBeforeMount(() => {
   if (!isAdmin.value) {
     router.push('/');
@@ -292,7 +286,7 @@ onMounted(async () => {
 
 .admin-btns {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   gap: 0.5rem;
 }

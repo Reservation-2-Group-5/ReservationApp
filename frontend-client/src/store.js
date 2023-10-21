@@ -107,26 +107,19 @@ export const useReservationStore = defineStore('reservation', () => {
       }
 
       // TODO: Remove with real data
-      // Add reservation data to devices
-      item.reservationRequests = [];
-      // random number of requests between 1 and 10
-      const numRequests = Math.floor(Math.random() * 10) + 1;
-      for (let i = 0; i < numRequests; i += 1) {
-        const request = {};
-        request.id = id;
-        id += 1;
-        // random requester
-        request.requestedBy = `${
-          ['John', 'Jane', 'Joe', 'Jill', 'Jack'][Math.floor(Math.random() * 5)]
-        } ${
-          ['Smith', 'Doe', 'Johnson', 'Williams', 'Brown'][Math.floor(Math.random() * 5)]
-        }`;
-        // random date between now and 2 weeks from now
-        request.requestedDate = new Date(Date.now() + Math.floor(Math.random() * 12096e5));
-        request.requestedStartDate = new Date(request.requestedDate);
-        request.requestedEndDate = new Date(request.requestedDate + 86400000);
-        item.reservationRequests.push(request);
-      }
+      // Add reservation data to devices - simulate db JOIN query
+      item.id = id;
+      id += 1;
+      // random requester
+      item.requestedBy = `${
+        ['John', 'Jane', 'Joe', 'Jill', 'Jack'][Math.floor(Math.random() * 5)]
+      } ${
+        ['Smith', 'Doe', 'Johnson', 'Williams', 'Brown'][Math.floor(Math.random() * 5)]
+      }`;
+      // random date between now and 2 weeks from now
+      item.requestedDate = new Date(Date.now() + Math.floor(Math.random() * 12096e5));
+      item.requestedStartDate = new Date(item.requestedDate);
+      item.requestedEndDate = new Date(item.requestedDate.getTime() + 2592e6);
 
       if (item.requestedDate && typeof item.requestedDate === 'string') {
         item.requestedDate = new Date(item.requestedDate);
@@ -151,20 +144,12 @@ export const useReservationStore = defineStore('reservation', () => {
 
   const setRequest = (id, to) => {
     for (const reservation of reservations.value) {
-      for (const request of reservation.reservationRequests) {
-        if (request.id === id) {
-          request.approved = to;
-          // remove the request from the list
-          reservation.reservationRequests = reservation.reservationRequests.filter(
-            (req) => req.id !== id,
-          );
-          // if there are no more requests, remove the reservation from the list
-          if (reservation.reservationRequests.length === 0) {
-            reservations.value = reservations.value.filter(
-              (res) => res.tag !== reservation.tag,
-            );
-          }
-        }
+      if (reservation.id === id) {
+        reservation.approved = to;
+        // remove the request from the list
+        reservations.value = reservations.value.filter(
+          (res) => res.tag !== reservation.tag,
+        );
       }
     }
   };

@@ -16,7 +16,7 @@
       scrollHeight="flex"
       :rows="10"
       paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-      :rowsPerPageOptions="[5, 10, 25]"
+      :rowsPerPageOptions="[10, 25, 50]"
       currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
       :globalFilterFields="['tag', 'category', 'name', 'assignedTo', 'netId', 'location', 'fundingSource', 'department', 'serialNumber', 'poNumber', 'warrantyExpiration', 'available']"
       tableStyle="min-width: 50rem;"
@@ -32,7 +32,7 @@
       <template #empty v-if="!loading">No items found.</template>
       <Column selectionMode="multiple" />
       <Column field="tag" header="Tag #" sortable style="min-width: 6rem" />
-      <Column header="Category" sortable filterField="category" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }">
+      <Column field="category" header="Category" sortable filterField="category" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }">
         <template #body="{ data }">
           {{ data.category }}
         </template>
@@ -51,7 +51,7 @@
           </span>
         </template>
       </Column>
-      <Column header="Assigned To" filterField="assignedTo" :showFilterMatchModes="false" :showFilterOperator="false" :filterMenuStyle="{ width: '14rem' }" style="min-width: 11rem" sortable :maxConstraints="1">
+      <Column field="assignedTo" header="Assigned To" filterField="assignedTo" :showFilterMatchModes="false" :showFilterOperator="false" :filterMenuStyle="{ width: '14rem' }" style="min-width: 11rem" sortable :maxConstraints="1">
         <template #body="{ data }">
           <ProfileName :name="data.assignedTo" :image="placeholderAvatar" :netId="data.netId" />
         </template>
@@ -71,9 +71,23 @@
           <MultiSelect v-model="filterModel.value" :options="locations" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
-      <Column field="fundingSource" header="Funding Source" sortable />
-      <Column field="department" header="Department Ownership" sortable />
-      <Column field="serialNumber" header="Serial #" sortable />
+      <Column field="fundingSource" header="Funding Source" sortable :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1">
+        <template #body="{ data }">
+          {{ data.fundingSource }}
+        </template>
+        <template #filter="{ filterModel }">
+          <MultiSelect v-model="filterModel.value" :options="fundingSources" placeholder="Any" class="p-column-filter" />
+        </template>
+      </Column>
+      <Column field="department" header="Department Ownership" sortable :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1">
+        <template #body="{ data }">
+          {{ data.department }}
+        </template>
+        <template #filter="{ filterModel }">
+          <MultiSelect v-model="filterModel.value" :options="departments" placeholder="Any" class="p-column-filter" />
+        </template>
+      </Column>
+      <Column field="serialNumber" header="Serial #" sortable style="min-width: 7rem" />
       <Column field="poNumber" header="PO #" sortable />
       <Column field="warrantyExpiration" filterField="warrantyExpiration" header="Warranty Expiration" dataType="date" :showFilterOperator="false" sortable>
         <template #body="{ data }">
@@ -196,6 +210,9 @@ const statuses = ref([]);
 const locations = ref([]);
 const categories = ref([]);
 const assignees = ref([]);
+const fundingSources = ref([]);
+const departments = ref([]);
+
 const dialogVisible = ref(false);
 const dialogPosition = ref('top');
 const reservationStartDate = ref();
@@ -209,12 +226,18 @@ const lists = {
   location: locations,
   category: categories,
   assignedTo: assignees,
+  fundingSource: fundingSources,
+  department: departments,
 };
 
 // clear the filters
-const clearFilter = () => clearFilters(filters);
+const clearFilter = () => {
+  clearFilters(filters);
+  filters.value.available.constraints[0].value = 'available';
+};
 onBeforeMount(() => {
   initFilters(filters);
+  filters.value.available.constraints[0].value = 'available';
 });
 
 // set the color of the status tag
@@ -263,9 +286,8 @@ function submitSelection() {
     return;
   }
 
-  /* TODO: if item is unavailable, db request reservation dates to find when it is available
-      and set the min start date to the next available date instead of disallowing */
-  if (selectedInventory.value[0].status === 'unavailable') {
+  // don't allow the user to submit request for an unavailable item
+  if (selectedInventory.value[0].available === 'unavailable') {
     toast.add({
       severity: 'error',
       summary: 'Item is unavailable',
@@ -309,14 +331,14 @@ function submitReservation(closeFn) {
     return;
   }
 
-  // TODO: submit reservation to server
+  // TODO: submit reservation to server, mark item as unavailable
   toast.add({
     severity: 'success',
     summary: 'Reservation submitted',
     detail: `Your ${selectedInventory.value[0].name} reservation has been submitted for ${formatDate(reservationStartDate.value)} to ${formatDate(reservationEndDate.value)}}`,
     life: toastDuration,
   });
-  selectedInventory.value[0].status = 'unavailable';
+  selectedInventory.value[0].available = 'unavailable';
   selectedInventory.value = [];
   closeDialog(closeFn);
 }

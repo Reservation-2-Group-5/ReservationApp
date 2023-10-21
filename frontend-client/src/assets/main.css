@@ -35,3 +35,19 @@
 .text-900 {
   color: #fff;
 }
+
+.custom-success .p-tooltip-text,
+.custom-error .p-tooltip-text {
+  color: #151515;
+  padding: 0.2rem 0.5rem;
+}
+
+.custom-success .p-tooltip-text {
+  background: #9fdaa8;
+  border: 1px solid #78cc86;
+}
+
+.custom-error .p-tooltip-text {
+  background: #f7c1c1;
+  border: 1px solid #f18e8e;
+}
