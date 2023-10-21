@@ -1,7 +1,7 @@
 <template>
   <div class="flex align-items-center gap-2">
-    <Avatar :image="image" size="small" shape="circle" />
-    <div><span>{{ name }}</span><span v-if="netId" class="netId">({{ netId }})</span></div>
+    <Avatar :image="image" size="small" class="avatar" shape="circle" />
+    <div><span>{{ name }}</span> <span v-if="netId" class="netId">({{ netId }})</span></div>
   </div>
 </template>
 
@@ -26,9 +26,13 @@ defineProps({
 </script>
 
 <style scoped>
+:deep(.avatar img) {
+  max-width: unset;
+  width: unset;
+}
+
 .netId {
   font-size: 0.8rem;
   color: var(--text-color-secondary);
-  padding-left: 0.3rem;
 }
 </style>
