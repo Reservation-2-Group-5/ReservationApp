@@ -3,11 +3,10 @@
   <div class="card">
     <DataTable
       :loading="loading"
-      v-model:selection="selectedInventory"
+      v-model:selection="selectedRooms"
       v-model:filters="filters"
       filterDisplay="menu"
-      :value="inventory"
-      dataKey="tag"
+      :value="rooms"
       @update:selection="clearSelection"
       :metaKeySelection="false"
       paginator
@@ -18,83 +17,91 @@
       paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
       :rowsPerPageOptions="[10, 25, 50]"
       currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
-      :globalFilterFields="['tag', 'category', 'name', 'assignedTo', 'netId', 'location', 'fundingSource', 'department', 'serialNumber', 'poNumber', 'warrantyExpiration', 'available']"
+      :globalFilterFields="[]"
       tableStyle="min-width: 50rem;"
-      class="inventory-table">
+      class="room-table">
       <template #header>
         <HeaderPanel
-          name="Inventory List"
+          name="Rooms List"
           :filters="filters"
           :fetchData="requestData"
           :clearFilters="clearFilter"
           @inputUpdate="filters['global'].value = $event" />
       </template>
-      <template #empty v-if="!loading">No items found.</template>
+      <template #empty v-if="!loading">No rooms found.</template>
       <Column selectionMode="multiple" />
-      <Column field="tag" header="Tag #" sortable style="min-width: 6rem" />
-      <Column field="category" header="Category" v-bind="filterAttributes">
+      <Column field="building" header="Building" v-bind="filterAttributes">
         <template #body="{ data }">
-          {{ data.category }}
+          {{ data.building }}
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="categories" placeholder="Any" class="p-column-filter" />
+          <MultiSelect v-model="filterModel.value" :options="buildings" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
-      <Column field="name" header="Name" v-bind="filterAttributes" :maxConstraints="2" :showFilterMatchModes="true" filterMenuStyle="width: 16rem">
+      <Column field="room" header="Room" v-bind="filterAttributes">
         <template #body="{ data }">
-          {{ data.name }}
+          {{ data.room }}
         </template>
         <template #filter="{ filterModel }">
-          <span class="p-input-icon-left">
-            <i class="pi pi-search" />
-            <AutoComplete v-model="filterModel.value" :suggestions="filteredItems" @complete="search" :virtualScrollerOptions="{ itemSize: 38, style: 'overflow-x: hidden; width: 13.3rem' }" dropdown />
-          </span>
+          <MultiSelect v-model="filterModel.value" :options="roomNumbers" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
-      <Column field="assignedTo" header="Assigned To" v-bind="filterAttributes" style="min-width: 11rem">
+
+      <!-- TODO: Combine date+time and use a calendar range selector -->
+      <Column field="date" header="Date" dataType="date" v-bind="filterAttributes" :showFilterMatchModes="true" :maxConstraints="2">
         <template #body="{ data }">
-          <ProfileName :name="data.assignedTo" :image="placeholderAvatar" :netId="data.netId" />
+          {{ formatDate(data.date) }}
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="assignees" placeholder="Any" class="p-column-filter">
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
+        </template>
+      </Column>
+      <Column field="time" header="Time" v-bind="filterAttributes">
+        <template #body="{ data }">
+          {{ data.time }}
+        </template>
+        <template #filter="{ filterModel }">
+          <Slider v-model="filterModel.value" range class="m-3" :min="0" :max="23" />
+          <div class="flex align-items-center justify-content-between px-2">
+            <span>{{ numToTime((filterModel.value?.[0]) ? filterModel.value[0] : 0) }}</span>
+            <span>{{ numToTime((filterModel.value?.[1]) ? filterModel.value[1] : 23) }}</span>
+          </div>
+        </template>
+      </Column>
+
+      <Column field="maxOccupancy" header="Max Occupancy" v-bind="filterAttributes">
+        <template #body="{ data }">
+          {{ data.maxOccupancy }}
+        </template>
+        <template #filter="{ filterModel }">
+          <Slider v-model="filterModel.value" range class="m-3" :min="minMaxOccupancy[0]" :max="minMaxOccupancy[1]" />
+          <div class="flex align-items-center justify-content-between px-2">
+            <span>{{ filterModel.value ? filterModel.value[0] : minMaxOccupancy[0] }}</span>
+            <span>{{ filterModel.value ? filterModel.value[1] : minMaxOccupancy[1] }}</span>
+          </div>
+        </template>
+      </Column>
+      <Column field="reservedBy" header="Reserved By" v-bind="filterAttributes">
+        <template #body="{ data }">
+          <ProfileName
+            :name="data.reservedBy"
+            :image="placeholderAvatar"
+            :netId="data.reservedByNetId" />
+        </template>
+        <template #filter="{ filterModel }">
+          <MultiSelect v-model="filterModel.value" :options="reservees" placeholder="Any" class="p-column-filter">
             <template #option="slotProps">
               <ProfileName :name="slotProps.option" :image="placeholderAvatar" />
             </template>
           </MultiSelect>
         </template>
       </Column>
-      <Column field="location" header="Location" v-bind="filterAttributes">
+      <Column field="type" header="Type" v-bind="filterAttributes">
         <template #body="{ data }">
-          {{ data.location }}
+          {{ data.type }}
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="locations" placeholder="Any" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="fundingSource" header="Funding Source" v-bind="filterAttributes">
-        <template #body="{ data }">
-          {{ data.fundingSource }}
-        </template>
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="fundingSources" placeholder="Any" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="department" header="Department Ownership" v-bind="filterAttributes">
-        <template #body="{ data }">
-          {{ data.department }}
-        </template>
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="departments" placeholder="Any" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="serialNumber" header="Serial #" style="min-width: 7rem" v-bind="filterAttributes" />
-      <Column field="poNumber" header="PO #" v-bind="filterAttributes" />
-      <Column field="warrantyExpiration" header="Warranty Expiration" dataType="date" v-bind="filterAttributes" :showFilterMatchModes="true" :maxConstraints="2">
-        <template #body="{ data }">
-          {{ formatDate(data.warrantyExpiration) }}
-        </template>
-        <template #filter="{ filterModel }">
-          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
+          <MultiSelect v-model="filterModel.value" :options="roomTypes" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
       <Column field="available" header="Status" v-bind="filterAttributes">
@@ -122,7 +129,7 @@
     <template #container="slotProps">
       <Card class="card">
         <template #title>
-          Reserving Item
+          Reserving Room
           <Divider />
         </template>
         <template #content>
@@ -137,16 +144,15 @@
             </span>
           </div>
           <div class="dialog-details">
-            <h1>{{ selectedInventory[0].name }}</h1>
+            <h1>{{ selectedRooms[0].name }}</h1>
             <div class="dialog-details-inner">
-              <p><span class="bold">Category:</span> {{ selectedInventory[0].category }}</p>
-              <p><span class="bold">Assigned To:</span> {{ `${selectedInventory[0].assignedTo} (${selectedInventory[0].netId})` }}</p>
-              <p><span class="bold">Location:</span> {{ selectedInventory[0].location }}</p>
-              <p><span class="bold">Funding Source:</span> {{ selectedInventory[0].fundingSource }}</p>
-              <p><span class="bold">Department Ownership:</span> {{ selectedInventory[0].department }}</p>
-              <p><span class="bold">Serial #:</span> {{ selectedInventory[0].serialNumber }}</p>
-              <p><span class="bold">PO #:</span> {{ selectedInventory[0].poNumber }}</p>
-              <p><span class="bold">Warranty Expiration:</span> {{ formatDate(selectedInventory[0].warrantyExpiration) }}</p>
+              <p><span class="bold">Building:</span> {{ selectedRooms[0].building }}</p>
+              <p><span class="bold">Room:</span> {{ selectedRooms[0].room }}</p>
+              <p><span class="bold">Date:</span> {{ formatDate(selectedRooms[0].date) }}</p>
+              <p><span class="bold">Time:</span> {{ selectedRooms[0].time }}</p>
+              <p><span class="bold">Max Occupancy:</span> {{ selectedRooms[0].maxOccupancy }}</p>
+              <p><span class="bold">Reserved By:</span> {{ `${selectedRooms[0].reservedBy} (${selectedRooms[0].reservedByNetId})` }}</p>
+              <p><span class="bold">Type:</span> {{ selectedRooms[0].type }}</p>
             </div>
           </div>
           <div class="dialog-buttons">
@@ -174,30 +180,29 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Calendar from 'primevue/calendar';
 import MultiSelect from 'primevue/multiselect';
-import AutoComplete from 'primevue/autocomplete';
 import Dialog from 'primevue/dialog';
 import Divider from 'primevue/divider';
 import Card from 'primevue/card';
+import Slider from 'primevue/slider';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { storeToRefs } from 'pinia';
 import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
 import ProfileName from '@/components/inventory-list/ProfileName.vue';
-import { useInventoryStore } from '@/store';
+import { useRoomStore } from '@/store';
 import {
   formatDate,
   initFilters,
   fetchData,
   clearFilters,
-  searchItems,
 } from '@/utils/dataTableFilters';
 
 const placeholderAvatar = 'https://images.placeholders.dev/?width=32&height=32';
 
 // get the inventory store
-const inventoryStore = useInventoryStore();
+const roomStore = useRoomStore();
 // const inventoryList = ref([]);
-const { inventory } = storeToRefs(inventoryStore);
+const { rooms } = storeToRefs(roomStore);
 
 // initialize the toast notifications
 const toast = useToast();
@@ -205,13 +210,12 @@ const toastDuration = 5000;
 
 // create the reactive variables
 const loading = ref(false);
-const selectedInventory = ref();
+const selectedRooms = ref();
 const statuses = ref([]);
-const locations = ref([]);
-const categories = ref([]);
-const assignees = ref([]);
-const fundingSources = ref([]);
-const departments = ref([]);
+const buildings = ref([]);
+const roomNumbers = ref([]);
+const reservees = ref([]);
+const roomTypes = ref([]);
 
 const dialogVisible = ref(false);
 const dialogPosition = ref('top');
@@ -223,11 +227,10 @@ const reservationEndDateDisabled = ref(true);
 const filters = ref();
 const lists = {
   available: statuses,
-  location: locations,
-  category: categories,
-  assignedTo: assignees,
-  fundingSource: fundingSources,
-  department: departments,
+  building: buildings,
+  room: roomNumbers,
+  reservedBy: reservees,
+  type: roomTypes,
 };
 
 // set the default column filter attributes to bind
@@ -241,14 +244,22 @@ const filterAttributes = {
   },
 };
 
+const minMaxOccupancy = computed(() => {
+  const min = Math.min(...rooms.value.map((r) => r.maxOccupancy));
+  const max = Math.max(...rooms.value.map((r) => r.maxOccupancy));
+  return [min, max];
+});
+
 // clear the filters
 const clearFilter = () => {
   clearFilters(filters);
   filters.value.available.constraints[0].value = 'available';
+  filters.value.maxOccupancy.value = minMaxOccupancy.value;
 };
 onBeforeMount(() => {
   initFilters(filters);
   filters.value.available.constraints[0].value = 'available';
+  filters.value.maxOccupancy.value = minMaxOccupancy.value;
 });
 
 // set the color of the status tag
@@ -265,50 +276,57 @@ function clearSelection(event) {
   // when the user selects a different item, the event is an array of length 2
   // the first item is the previous selection and the second item is the current selection
   const currentSelection = (event.length && event.length <= 2) ? event[event.length - 1] : null;
-  selectedInventory.value = (currentSelection) ? [currentSelection] : [];
+  selectedRooms.value = (currentSelection) ? [currentSelection] : [];
 }
 
-// create a list of item names for the autocomplete
-const itemNames = computed(() => inventoryStore.inventory.map((item) => item.name));
-const filteredItems = ref([]);
-
-function search(event) {
-  searchItems(event, itemNames, filteredItems);
+function numToTime(num) {
+  // input is a number from 0 to 23
+  // output is a string in the format "hh AM/PM"
+  if (num === 0) {
+    return '12 AM';
+  }
+  if (num < 12) {
+    return `${num} AM`;
+  }
+  if (num === 12) {
+    return '12 PM';
+  }
+  return `${num - 12} PM`;
 }
 
 // submit the selected row
 function submitSelection() {
-  if (!selectedInventory.value?.length) {
+  if (!selectedRooms.value?.length) {
     toast.add({
       severity: 'error',
-      summary: 'No items selected',
-      detail: 'Please select at least one item to submit',
+      summary: 'No room selected',
+      detail: 'Please select at least one room to submit',
       life: toastDuration,
     });
     return;
   }
-  if (selectedInventory.value.length > 1) {
+  if (selectedRooms.value.length > 1) {
     toast.add({
       severity: 'warn',
-      summary: 'Multiple items selected',
-      detail: 'Only one item can be submitted at a time',
+      summary: 'Multiple rooms selected',
+      detail: 'Only one room can be submitted at a time',
       life: toastDuration,
     });
     return;
   }
 
-  // don't allow the user to submit request for an unavailable item
-  if (selectedInventory.value[0].available === 'unavailable') {
+  // don't allow the user to submit request for an unavailable room
+  if (selectedRooms.value[0].available === 'unavailable') {
     toast.add({
       severity: 'error',
-      summary: 'Item is unavailable',
-      detail: 'Please select an available item',
+      summary: 'Room is unavailable',
+      detail: 'Please select an available room',
       life: toastDuration,
     });
     return;
   }
 
-  console.log('selectedInventory', selectedInventory.value[0]);
+  console.log('selectedRooms', selectedRooms.value[0]);
   // open the dialog to set the reservation dates
   dialogVisible.value = true;
 }
@@ -346,11 +364,11 @@ function submitReservation(closeFn) {
   toast.add({
     severity: 'success',
     summary: 'Reservation submitted',
-    detail: `Your ${selectedInventory.value[0].name} reservation has been submitted for ${formatDate(reservationStartDate.value)} to ${formatDate(reservationEndDate.value)}}`,
+    detail: `Your ${selectedRooms.value[0].name} reservation has been submitted for ${formatDate(reservationStartDate.value)} to ${formatDate(reservationEndDate.value)}}`,
     life: toastDuration,
   });
-  selectedInventory.value[0].available = 'unavailable';
-  selectedInventory.value = [];
+  selectedRooms.value[0].available = 'unavailable';
+  selectedRooms.value = [];
   closeDialog(closeFn);
 }
 
@@ -384,7 +402,7 @@ watch(reservationStartDate, (newVal) => {
 });
 
 async function requestData() {
-  await fetchData(inventoryStore, loading, lists);
+  await fetchData(roomStore, loading, lists);
 }
 
 // fetch data when the view is created
@@ -398,7 +416,7 @@ onMounted(async () => {
   height: 100%;
 }
 
-.inventory-table {
+.room-table {
   flex: 1;
 }
 

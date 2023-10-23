@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '@/store';
 import Home from '@/views/Home.vue';
 import InventoryList from '@/views/InventoryList.vue';
+import RoomsList from '@/views/RoomsList.vue';
 import AdminPanel from '@/views/AdminPanel.vue';
 import LoginPage from '@/views/LoginPage.vue';
 import LogoutPage from '@/views/LogoutPage.vue';
@@ -17,7 +18,7 @@ const routes = [{
 }, {
   path: '/rooms',
   name: 'Rooms',
-  component: null,
+  component: RoomsList,
 }, {
   path: '/login',
   name: 'Login',

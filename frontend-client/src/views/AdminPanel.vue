@@ -31,7 +31,7 @@
       </template>
       <template #empty v-if="!loading">No items found.</template>
       <Column field="tag" header="Tag #" sortable style="min-width: 6rem" />
-      <Column field="category" sortable filterField="category" :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }" style="min-width: 7rem">
+      <Column field="category" filterField="category" style="min-width: 7rem" v-bind="filterAttributes">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Category'">Cat</span>
         </template>
@@ -39,21 +39,21 @@
           {{ data.category }}
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="categories" placeholder="Any" class="p-column-filter" />
+          <MultiSelect v-model="filterModel.value" :options="categories.sort()" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
-      <Column field="name" header="Name" sortable style="min-width: 8rem">
+      <Column field="name" header="Name" style="min-width: 8rem" v-bind="filterAttributes" :maxConstraints="2" :showFilterMatchModes="true" filterMenuStyle="width: 16rem">
         <template #body="{ data }">
           {{ data.name }}
         </template>
         <template #filter="{ filterModel }">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <AutoComplete v-model="filterModel.value" :suggestions="filteredItems" @complete="search" :virtualScrollerOptions="{ itemSize: 38, style: 'overflow-x: hidden' }" dropdown />
+            <AutoComplete v-model="filterModel.value" :suggestions="filteredItems" @complete="search" :virtualScrollerOptions="{ itemSize: 38, style: 'overflow-x: hidden; width: 13.3rem' }" dropdown />
           </span>
         </template>
       </Column>
-      <Column field="assignedTo" filterField="assignedTo" :showFilterMatchModes="false" :showFilterOperator="false" :filterMenuStyle="{ width: '14rem' }" sortable :maxConstraints="1" style="min-width: 9.2rem">
+      <Column field="assignedTo" filterField="assignedTo" v-bind="filterAttributes" style="min-width: 9.2rem">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Assigned To'">Asgn To</span>
         </template>
@@ -61,14 +61,14 @@
           <ProfileName :name="data.assignedTo" :image="placeholderAvatar" :netId="data.netId" />
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="assignees" placeholder="Any" class="p-column-filter">
+          <MultiSelect v-model="filterModel.value" :options="assignees.sort()" placeholder="Any" class="p-column-filter">
             <template #option="slotProps">
               <ProfileName :name="slotProps.option" :image="placeholderAvatar" />
             </template>
           </MultiSelect>
         </template>
       </Column>
-      <Column field="location" sortable :showFilterMatchModes="false" :showFilterOperator="false" :maxConstraints="1" :filterMenuStyle="{ width: '14rem' }" style="min-width: 7rem">
+      <Column field="location" style="min-width: 7rem" v-bind="filterAttributes">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Location'">Loc</span>
         </template>
@@ -76,22 +76,34 @@
           {{ data.location }}
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="locations" placeholder="Any" class="p-column-filter" />
+          <MultiSelect v-model="filterModel.value" :options="locations.sort()" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
-      <Column field="fundingSource" sortable style="min-width: 8rem">
+      <Column field="fundingSource" style="min-width: 8rem" v-bind="filterAttributes">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Funding Source'">Fund Src</span>
         </template>
+        <template #body="{ data }">
+          {{ data.fundingSource }}
+        </template>
+        <template #filter="{ filterModel }">
+          <MultiSelect v-model="filterModel.value" :options="fundingSources.sort()" placeholder="Any" class="p-column-filter" />
+        </template>
       </Column>
-      <Column field="department" sortable style="min-width: 8rem">
+      <Column field="department" style="min-width: 8rem" v-bind="filterAttributes">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Department Ownership'">Dept</span>
         </template>
+        <template #body="{ data }">
+          {{ data.department }}
+        </template>
+        <template #filter="{ filterModel }">
+          <MultiSelect v-model="filterModel.value" :options="departments.sort()" placeholder="Any" class="p-column-filter" />
+        </template>
       </Column>
-      <Column field="serialNumber" header="Serial #" sortable style="min-width: 7rem" />
-      <Column field="poNumber" header="PO #" sortable style="min-width: 7rem" />
-      <Column field="warrantyExpiration" filterField="warrantyExpiration" dataType="date" :showFilterOperator="false" sortable style="min-width: 7rem">
+      <Column field="serialNumber" header="Serial #" style="min-width: 7rem" v-bind="filterAttributes" />
+      <Column field="poNumber" header="PO #" style="min-width: 7rem" v-bind="filterAttributes" />
+      <Column field="warrantyExpiration" dataType="date" style="min-width: 7rem" v-bind="filterAttributes" :maxConstraints="2" :showFilterMatchModes="true">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Warranty Expiration'">Wrty Exp</span>
         </template>
@@ -102,39 +114,52 @@
           <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
         </template>
       </Column>
-      <Column field="requestedBy" style="min-width: 9.2rem" sortable>
+      <Column field="requestedBy" style="min-width: 9.2rem" v-bind="filterAttributes">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Requested By'">Req By</span>
         </template>
         <template #body="{ data }">
-          <ProfileName
-            :name="data.requestedBy"
-            :image="placeholderAvatar"
-            :netId="data.netId" />
+          <ProfileName :name="data.requestedBy" :image="placeholderAvatar" :netId="data.netId" />
+        </template>
+        <template #filter="{ filterModel }">
+          <MultiSelect v-model="filterModel.value" :options="requestees.sort()" placeholder="Any" class="p-column-filter">
+            <template #option="slotProps">
+              <ProfileName :name="slotProps.option" :image="placeholderAvatar" />
+            </template>
+          </MultiSelect>
         </template>
       </Column>
-      <Column field="requestedDate" dataType="date" style="min-width: 6rem" sortable>
+      <Column field="requestedOnDate" dataType="date" style="min-width: 6rem" v-bind="filterAttributes" :maxConstraints="2" :showFilterMatchModes="true">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Requested On'">Req On</span>
         </template>
         <template #body="{ data }">
-          {{ formatDate(data.requestedDate) }}
+          {{ formatDate(data.requestedOnDate) }}
+        </template>
+        <template #filter="{ filterModel }">
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
         </template>
       </Column>
-      <Column field="requestedStartDate" dataType="date" style="min-width: 6rem" sortable>
+      <Column field="requestedStartDate" dataType="date" style="min-width: 6rem" v-bind="filterAttributes" :maxConstraints="2" :showFilterMatchModes="true">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Requested Reservation Starting Date'">Res Start</span>
         </template>
         <template #body="{ data }">
-          {{ formatDate(data.requestedDate) }}
+          {{ formatDate(data.requestedStartDate) }}
+        </template>
+        <template #filter="{ filterModel }">
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
         </template>
       </Column>
-      <Column field="requestedEndDate" dataType="date" style="min-width: 6rem" sortable>
+      <Column field="requestedEndDate" dataType="date" style="min-width: 6rem" v-bind="filterAttributes" :maxConstraints="2" :showFilterMatchModes="true">
         <template #header>
           <span class="p-column-title" v-tooltip.top="'Requested Reservation Ending Date'">Res End</span>
         </template>
         <template #body="{ data }">
-          {{ formatDate(data.requestedDate) }}
+          {{ formatDate(data.requestedEndDate) }}
+        </template>
+        <template #filter="{ filterModel }">
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
         </template>
       </Column>
       <Column>
@@ -196,6 +221,7 @@ import {
 
 const placeholderAvatar = 'https://images.placeholders.dev/?width=48&height=48';
 
+// setup the data stores
 const userStore = useUserStore();
 const reservationStore = useReservationStore();
 const { isAdmin } = storeToRefs(userStore);
@@ -212,6 +238,8 @@ const locations = ref([]);
 const categories = ref([]);
 const assignees = ref([]);
 const requestees = ref([]);
+const fundingSources = ref([]);
+const departments = ref([]);
 const expandedRows = ref([]);
 const toastRef = ref();
 
@@ -224,6 +252,19 @@ const lists = {
   category: categories,
   assignedTo: assignees,
   requestedBy: requestees,
+  fundingSource: fundingSources,
+  department: departments,
+};
+
+// set the default column filter attributes to bind
+const filterAttributes = {
+  sortable: true,
+  showFilterMatchModes: false,
+  showFilterOperator: false,
+  maxConstraints: 1,
+  filterMenuStyle: {
+    width: '14rem',
+  },
 };
 
 // create a list of item names for the autocomplete

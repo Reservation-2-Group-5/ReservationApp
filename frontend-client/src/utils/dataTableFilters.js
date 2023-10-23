@@ -35,7 +35,15 @@ export function initFilters(filters) {
       operator: FilterOperator.OR,
       constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
     },
-    requestedDate: {
+    requestedOnDate: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
+    },
+    requestedStartDate: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
+    },
+    requestedEndDate: {
       operator: FilterOperator.AND,
       constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
     },
@@ -47,6 +55,28 @@ export function initFilters(filters) {
       operator: FilterOperator.OR,
       constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
     },
+    building: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    room: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    date: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
+    },
+    time: { value: [0, 23], matchMode: FilterMatchMode.BETWEEN },
+    reservedBy: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    type: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    maxOccupancy: { value: [0, 100], matchMode: FilterMatchMode.BETWEEN },
   };
 }
 
