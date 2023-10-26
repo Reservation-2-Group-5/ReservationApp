@@ -1,6 +1,6 @@
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 
-export function initFilters(filters) {
+export function initFilters(filters, type) {
   filters.value = {
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     category: {
@@ -55,29 +55,34 @@ export function initFilters(filters) {
       operator: FilterOperator.OR,
       constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
     },
-    building: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-    },
-    room: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-    },
-    date: {
-      operator: FilterOperator.AND,
-      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
-    },
-    time: { value: [0, 23], matchMode: FilterMatchMode.BETWEEN },
-    reservedBy: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-    },
-    type: {
-      operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
-    },
-    maxOccupancy: { value: [0, 100], matchMode: FilterMatchMode.BETWEEN },
   };
+  if (type === 'room') {
+    filters.value = {
+      ...filters.value,
+      building: {
+        operator: FilterOperator.OR,
+        constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      },
+      room: {
+        operator: FilterOperator.OR,
+        constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      },
+      date: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
+      },
+      time: { value: [0, 23], matchMode: FilterMatchMode.BETWEEN },
+      reservedBy: {
+        operator: FilterOperator.OR,
+        constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      },
+      type: {
+        operator: FilterOperator.OR,
+        constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      },
+      maxOccupancy: { value: [0, 100], matchMode: FilterMatchMode.BETWEEN },
+    };
+  }
 }
 
 // create a list of unique filter options
@@ -93,8 +98,8 @@ function setFilterOptions(newData, lists) {
 }
 
 // clear the filters
-export function clearFilters(filters) {
-  initFilters(filters);
+export function clearFilters(filters, type) {
+  initFilters(filters, type);
 }
 
 // fetch the data from the server or test data file

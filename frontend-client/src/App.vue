@@ -36,4 +36,9 @@ import NavBar from '@/components/NavBar.vue';
   height: 100%;
   max-width: 100%;
 }
+
+:deep(.p-column-filter-menu-button.p-column-filter-menu-button-active) {
+  background-color: transparent;
+  color: #8dd0ff;
+}
 </style>

@@ -7,7 +7,6 @@
       v-model:filters="filters"
       filterDisplay="menu"
       :value="inventory"
-      dataKey="tag"
       @update:selection="clearSelection"
       :metaKeySelection="false"
       paginator
@@ -196,7 +195,6 @@ const placeholderAvatar = 'https://images.placeholders.dev/?width=32&height=32';
 
 // get the inventory store
 const inventoryStore = useInventoryStore();
-// const inventoryList = ref([]);
 const { inventory } = storeToRefs(inventoryStore);
 
 // initialize the toast notifications
@@ -390,6 +388,7 @@ async function requestData() {
 // fetch data when the view is created
 onMounted(async () => {
   await requestData();
+  // console.log('inventory', inventory.value);
 });
 </script>
 
