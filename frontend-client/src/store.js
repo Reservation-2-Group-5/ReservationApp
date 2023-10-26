@@ -3,6 +3,51 @@ import { ref, computed } from 'vue';
 import { isDev } from '@/utils/env';
 import sleep from '@/utils/sleep';
 
+const formatInventoryData = (data) => {
+  const formattedData = [];
+  for (const item of data) {
+    const newItem = {};
+    newItem.tag = item.Tag;
+    newItem.category = item['Model Category'];
+    newItem.name = item['Device Display Name'];
+    newItem.assignedTo = item['Assigned To'];
+    newItem.netId = item.NetID;
+    newItem.location = item.Location;
+    newItem.fundingSource = item['Funding Source'];
+    newItem.department = item['Department Ownership'];
+    newItem.serialNumber = item['Serial Number'];
+    newItem.poNumber = item['PO#'];
+    newItem.warrantyExpiration = item['Warranty Expiration'];
+    newItem.available = (item.Available) ? 'available' : 'unavailable';
+    if (newItem.warrantyExpiration && typeof newItem.warrantyExpiration === 'string') {
+      newItem.warrantyExpiration = new Date(newItem.warrantyExpiration);
+    }
+    formattedData.push(newItem);
+  }
+  return formattedData;
+};
+
+const formatRoomData = (data) => {
+  const formattedData = [];
+  for (const room of data) {
+    const newRoom = {};
+    newRoom.building = room.Building;
+    newRoom.room = room.Room;
+    newRoom.date = room.Date;
+    newRoom.time = room.Time;
+    newRoom.available = (room.Available) ? 'available' : 'unavailable';
+    newRoom.reservedBy = room['Reserved by (name)'];
+    newRoom.reservedByNetId = room['Reserved by (netid)'];
+    newRoom.maxOccupancy = room['Max occupancy'];
+    newRoom.type = room['Type of room'];
+    if (newRoom.date && typeof newRoom.date === 'string') {
+      newRoom.date = new Date(newRoom.date);
+    }
+    formattedData.push(newRoom);
+  }
+  return formattedData;
+};
+
 export const useUserStore = defineStore('user', () => {
   const user = ref(null);
 
@@ -25,20 +70,11 @@ export const useInventoryStore = defineStore('inventory', () => {
   const inventory = ref([]);
 
   const setInventory = (newInventory) => {
-    inventory.value = newInventory;
-    for (const item of inventory.value) {
-      item.img = item.img ?? '';
-      if (item.startDate && typeof item.startDate === 'string') {
-        item.startDate = new Date(item.startDate);
-      }
-      if (item.endDate && typeof item.endDate === 'string') {
-        item.endDate = new Date(item.endDate);
-      }
-    }
+    inventory.value = formatInventoryData(newInventory);
   };
 
   const fetchInventory = async () => {
-    const location = (isDev) ? 'testData.json' : 'db';
+    const location = (isDev) ? 'realInventoryTestData.json' : 'db';
     if (isDev) {
       // simulate a fetch delay
       await sleep(1000);
@@ -80,23 +116,37 @@ export const useReservationStore = defineStore('reservation', () => {
   const reservations = ref([]);
 
   const setReservations = (newReservations) => {
-    reservations.value = newReservations;
+    reservations.value = formatInventoryData(newReservations);
+    let id = 0;
     for (const item of reservations.value) {
-      item.img = item.img ?? '';
-      if (item.startDate && typeof item.startDate === 'string') {
-        item.startDate = new Date(item.startDate);
+      // item.img = item.img ?? '';
+      if (item.warrantyExpiration && typeof item.warrantyExpiration === 'string') {
+        item.warrantyExpiration = new Date(item.warrantyExpiration);
       }
-      if (item.endDate && typeof item.endDate === 'string') {
-        item.endDate = new Date(item.endDate);
-      }
-      if (item.requestedDate && typeof item.requestedDate === 'string') {
-        item.requestedDate = new Date(item.requestedDate);
+
+      // TODO: Remove with real data
+      // Add reservation data to devices - simulate db JOIN query
+      item.id = id;
+      id += 1;
+      // random requester
+      item.requestedBy = `${
+        ['John', 'Jane', 'Joe', 'Jill', 'Jack'][Math.floor(Math.random() * 5)]
+      } ${
+        ['Smith', 'Doe', 'Johnson', 'Williams', 'Brown'][Math.floor(Math.random() * 5)]
+      }`;
+      // random date between now and 2 weeks from now
+      item.requestedOnDate = new Date(Date.now() + Math.floor(Math.random() * 12096e5));
+      item.requestedStartDate = new Date(item.requestedOnDate);
+      item.requestedEndDate = new Date(item.requestedOnDate.getTime() + 2592e6);
+
+      if (item.requestedOnDate && typeof item.requestedOnDate === 'string') {
+        item.requestedOnDate = new Date(item.requestedOnDate);
       }
     }
   };
 
   const fetchReservations = async () => {
-    const location = (isDev) ? 'testData.json' : 'db';
+    const location = (isDev) ? 'realInventoryTestData.json' : 'db';
     if (isDev) {
       // simulate a fetch delay
       await sleep(1000);
@@ -110,24 +160,24 @@ export const useReservationStore = defineStore('reservation', () => {
     }
   };
 
-  const approveReservation = (id) => {
+  const setRequest = (id, to) => {
     for (const reservation of reservations.value) {
       if (reservation.id === id) {
-        reservation.approved = true;
-        // remove the reservation from the list
-        reservations.value = reservations.value.filter((res) => res.id !== id);
+        reservation.approved = to;
+        // remove the request from the list
+        reservations.value = reservations.value.filter(
+          (res) => res.tag !== reservation.tag,
+        );
       }
     }
   };
 
-  const denyReservation = (id) => {
-    for (const reservation of reservations.value) {
-      if (reservation.id === id) {
-        reservation.approved = false;
-        // remove the reservation from the list
-        reservations.value = reservations.value.filter((res) => res.id !== id);
-      }
-    }
+  const approveRequest = (id) => {
+    setRequest(id, true);
+  };
+
+  const denyRequest = (id) => {
+    setRequest(id, false);
   };
 
   const fetchAll = async () => {
@@ -140,8 +190,45 @@ export const useReservationStore = defineStore('reservation', () => {
     reservations,
     setReservations,
     fetchReservations,
-    approveReservation,
-    denyReservation,
+    approveRequest,
+    denyRequest,
+    fetchAll,
+    getAll,
+  };
+});
+
+export const useRoomStore = defineStore('rooms', () => {
+  const rooms = ref([]);
+
+  const setRooms = (newRooms) => {
+    rooms.value = formatRoomData(newRooms);
+  };
+
+  const fetchRooms = async () => {
+    const location = (isDev) ? 'realRoomTestData.json' : 'db';
+    if (isDev) {
+      // simulate a fetch delay
+      await sleep(1000);
+    }
+    try {
+      const response = await fetch(location);
+      const json = await response.json();
+      setRooms(json);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchAll = async () => {
+    await fetchRooms();
+  };
+
+  const getAll = computed(() => rooms.value);
+
+  return {
+    rooms,
+    setRooms,
+    fetchRooms,
     fetchAll,
     getAll,
   };

@@ -28,10 +28,12 @@ import NavBar from '@/components/NavBar.vue';
   margin: 20px;
   overflow: hidden;
   display: flex;
+  max-width: calc(100% - 40px);
 }
 
 .routes {
   flex: 1;
   height: 100%;
+  max-width: 100%;
 }
 </style>

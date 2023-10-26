@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '@/store';
 import Home from '@/views/Home.vue';
 import InventoryList from '@/views/InventoryList.vue';
+import RoomsList from '@/views/RoomsList.vue';
 import AdminPanel from '@/views/AdminPanel.vue';
 import LoginPage from '@/views/LoginPage.vue';
 import LogoutPage from '@/views/LogoutPage.vue';
@@ -15,9 +16,9 @@ const routes = [{
   name: 'Inventory',
   component: InventoryList,
 }, {
-  path: '/spaces',
-  name: 'Spaces',
-  component: null,
+  path: '/rooms',
+  name: 'Rooms',
+  component: RoomsList,
 }, {
   path: '/login',
   name: 'Login',
@@ -50,6 +51,7 @@ router.beforeEach((to) => {
       name: 'Home',
     };
   }
+  document.title = `Reservation App | ${to.name}`;
   const userStore = useUserStore();
   if (to.meta.requiresAuth && !userStore.isLoggedIn) {
     return {
