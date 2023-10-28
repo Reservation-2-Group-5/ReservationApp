@@ -87,7 +87,9 @@ export function initFilters(filters, type) {
 
 // create a list of unique filter options
 function createUniqueFilterOptions(data, field) {
-  return [...new Set(data.map((item) => item[field]))];
+  const options = data.map((item) => item[field])
+    .sort().filter((item) => item !== null);
+  return [...new Set(options)];
 }
 
 // set the filter options for the dropdowns

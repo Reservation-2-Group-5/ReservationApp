@@ -14,7 +14,7 @@
       :sortOrder="1"
       scrollable
       scrollHeight="flex"
-      :rows="10"
+      :rows="25"
       paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
       :rowsPerPageOptions="[10, 25, 50]"
       currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
@@ -39,7 +39,7 @@
           {{ data.category }}
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="categories.sort()" placeholder="Any" class="p-column-filter" />
+          <MultiSelect v-model="filterModel.value" :options="categories" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
       <Column field="name" header="Name" style="min-width: 8rem" v-bind="filterAttributes" :maxConstraints="2" :showFilterMatchModes="true" filterMenuStyle="width: 16rem">
@@ -66,7 +66,7 @@
           <span v-else>None</span>
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="assignees.sort()" placeholder="Any" class="p-column-filter">
+          <MultiSelect v-model="filterModel.value" :options="assignees" placeholder="Any" class="p-column-filter">
             <template #option="slotProps">
               <ProfileName :name="slotProps.option" :image="placeholderAvatar" />
             </template>
@@ -81,7 +81,7 @@
           {{ data.location }}
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="locations.sort()" placeholder="Any" class="p-column-filter" />
+          <MultiSelect v-model="filterModel.value" :options="locations" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
       <Column field="fundingSource" style="min-width: 8rem" v-bind="filterAttributes">
@@ -92,7 +92,7 @@
           {{ data.fundingSource }}
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="fundingSources.sort()" placeholder="Any" class="p-column-filter" />
+          <MultiSelect v-model="filterModel.value" :options="fundingSources" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
       <Column field="department" style="min-width: 8rem" v-bind="filterAttributes">
@@ -103,7 +103,7 @@
           {{ data.department }}
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="departments.sort()" placeholder="Any" class="p-column-filter" />
+          <MultiSelect v-model="filterModel.value" :options="departments" placeholder="Any" class="p-column-filter" />
         </template>
       </Column>
       <Column field="serialNumber" header="Serial #" style="min-width: 7rem" v-bind="filterAttributes" />
@@ -127,7 +127,7 @@
           <ProfileName :name="data.requestedBy" :image="placeholderAvatar" :netId="data.reqNetId" />
         </template>
         <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="requestees.sort()" placeholder="Any" class="p-column-filter">
+          <MultiSelect v-model="filterModel.value" :options="requestees" placeholder="Any" class="p-column-filter">
             <template #option="slotProps">
               <ProfileName :name="slotProps.option" :image="placeholderAvatar" />
             </template>

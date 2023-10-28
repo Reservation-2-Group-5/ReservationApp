@@ -3,6 +3,14 @@ import { ref, computed } from 'vue';
 import { isDev } from '@/utils/env';
 import sleep from '@/utils/sleep';
 
+const API = 'api/v1';
+
+const apiAccessible = async () => {
+  const apiLocation = '/api';
+  const apiResponse = await fetch(apiLocation, { method: 'HEAD' });
+  return apiResponse.status === 200;
+};
+
 const fixDate = (date) => {
   if (date && (typeof date === 'string' || typeof date === 'number')) {
     return new Date(date);
@@ -107,13 +115,20 @@ export const useInventoryStore = defineStore('inventory', () => {
 
   const fetchInventory = async () => {
     // const location = (isDev) ? 'realInventoryTestData.json' : 'db';
-    const location = 'api/v1/devices';
+    // const location = 'api/v1/devices';
+    const deviceResLocation = `${API}/devices`;
+    const testDataLocation = 'realInventoryTestData.json';
     if (isDev) {
       // simulate a fetch delay
       await sleep(1000);
     }
     try {
-      const response = await fetch(location);
+      // Check if /api is accessible
+      const useApi = await apiAccessible();
+      const selectedLocation = (useApi) ? deviceResLocation : testDataLocation;
+
+      // Fetch device reservations
+      const response = await fetch(selectedLocation);
       const json = await response.json();
       setInventory(json);
     } catch (err) {
@@ -165,6 +180,9 @@ export const useDeviceReservationStore = defineStore('deviceReservation', () => 
       } ${
         ['Smith', 'Doe', 'Johnson', 'Williams', 'Brown'][Math.floor(Math.random() * 5)]
       }`;
+      const firstInitial = item.requestedBy[0].toLowerCase();
+      const lastName = item.requestedBy.split(' ')[1].toLowerCase();
+      item.reqNetId = `${firstInitial}${lastName}`;
       // random date between now and 2 weeks from now
       item.requestedOnDate = new Date(Date.now() + Math.floor(Math.random() * 12096e5));
       item.requestedStartDate = new Date(item.requestedOnDate);
@@ -174,14 +192,22 @@ export const useDeviceReservationStore = defineStore('deviceReservation', () => 
 
   const fetchReservations = async () => {
     // const location = (isDev) ? 'realInventoryTestData.json' : 'db';
-    const location = 'api/v1/device-res';
+    // const location = 'api/v1/device-res';
+    const deviceResLocation = `${API}/device-res`;
+    const testDataLocation = 'realInventoryTestData.json';
     if (isDev) {
       // simulate a fetch delay
       await sleep(1000);
     }
     try {
-      const response = await fetch(location);
+      // Check if /api is accessible
+      const useApi = await apiAccessible();
+      const selectedLocation = (useApi) ? deviceResLocation : testDataLocation;
+
+      // Fetch device reservations
+      const response = await fetch(selectedLocation);
       const json = await response.json();
+
       setReservations(json);
     } catch (err) {
       console.error(err);
@@ -234,13 +260,20 @@ export const useRoomStore = defineStore('rooms', () => {
 
   const fetchRooms = async () => {
     // const location = (isDev) ? 'realRoomTestData.json' : 'db';
-    const location = 'api/v1/rooms';
+    // const location = 'api/v1/rooms';
+    const deviceResLocation = `${API}/rooms`;
+    const testDataLocation = 'realRoomTestData.json';
     if (isDev) {
       // simulate a fetch delay
       await sleep(1000);
     }
     try {
-      const response = await fetch(location);
+      // Check if /api is accessible
+      const useApi = await apiAccessible();
+      const selectedLocation = (useApi) ? deviceResLocation : testDataLocation;
+
+      // Fetch device reservations
+      const response = await fetch(selectedLocation);
       const json = await response.json();
       setRooms(json);
     } catch (err) {
