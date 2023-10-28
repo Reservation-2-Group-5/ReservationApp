@@ -21,12 +21,14 @@ if (!certificateName) {
 const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
 const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
 
-const filesToExclude = ['public/testData.json'];
+const filesToExclude = ['public/realInventoryTestData.json', 'public/realRoomTestData.json'];
 
 const filePathsToExclude = filesToExclude.map((file) => fileURLToPath(new URL(
   file,
   import.meta.url,
 )));
+
+const isDev = (process.env.NODE_ENV === 'development');
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -41,8 +43,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '^/db': {
-        target: 'https://localhost:7268/',
+      '^/api': {
+        target: (isDev) ? 'http://localhost:7268/' : 'https://localhost:7268/',
         secure: false,
       },
     },

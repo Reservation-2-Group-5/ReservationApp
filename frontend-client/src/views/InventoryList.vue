@@ -7,14 +7,13 @@
       v-model:filters="filters"
       filterDisplay="menu"
       :value="inventory"
-      dataKey="tag"
       @update:selection="clearSelection"
       :metaKeySelection="false"
       paginator
       removableSort
       scrollable
       scrollHeight="flex"
-      :rows="10"
+      :rows="25"
       paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
       :rowsPerPageOptions="[10, 25, 50]"
       currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
@@ -53,7 +52,12 @@
       </Column>
       <Column field="assignedTo" header="Assigned To" v-bind="filterAttributes" style="min-width: 11rem">
         <template #body="{ data }">
-          <ProfileName :name="data.assignedTo" :image="placeholderAvatar" :netId="data.netId" />
+          <ProfileName
+            v-if="data.assignedTo"
+            :name="data.assignedTo"
+            :image="placeholderAvatar"
+            :netId="data.netId" />
+          <span v-else>None</span>
         </template>
         <template #filter="{ filterModel }">
           <MultiSelect v-model="filterModel.value" :options="assignees" placeholder="Any" class="p-column-filter">
@@ -196,7 +200,6 @@ const placeholderAvatar = 'https://images.placeholders.dev/?width=32&height=32';
 
 // get the inventory store
 const inventoryStore = useInventoryStore();
-// const inventoryList = ref([]);
 const { inventory } = storeToRefs(inventoryStore);
 
 // initialize the toast notifications
@@ -390,6 +393,7 @@ async function requestData() {
 // fetch data when the view is created
 onMounted(async () => {
   await requestData();
+  // console.log('inventory', inventory.value);
 });
 </script>
 

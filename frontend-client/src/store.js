@@ -3,25 +3,38 @@ import { ref, computed } from 'vue';
 import { isDev } from '@/utils/env';
 import sleep from '@/utils/sleep';
 
+const API = 'api/v1';
+
+const apiAccessible = async () => {
+  const apiLocation = '/api';
+  const apiResponse = await fetch(apiLocation, { method: 'HEAD' });
+  return apiResponse.status === 200;
+};
+
+const fixDate = (date) => {
+  if (date && (typeof date === 'string' || typeof date === 'number')) {
+    return new Date(date);
+  }
+  return date;
+};
+
 const formatInventoryData = (data) => {
   const formattedData = [];
   for (const item of data) {
     const newItem = {};
     newItem.tag = item.Tag;
-    newItem.category = item['Model Category'];
-    newItem.name = item['Device Display Name'];
-    newItem.assignedTo = item['Assigned To'];
-    newItem.netId = item.NetID;
+    newItem.category = item.Model_Category;
+    newItem.name = item.Device_Display_Name;
+    newItem.assignedTo = item.Assigned_To;
+    newItem.netId = item.Reserved_NetID;
     newItem.location = item.Location;
-    newItem.fundingSource = item['Funding Source'];
-    newItem.department = item['Department Ownership'];
-    newItem.serialNumber = item['Serial Number'];
-    newItem.poNumber = item['PO#'];
-    newItem.warrantyExpiration = item['Warranty Expiration'];
+    newItem.fundingSource = item.Funding_Source;
+    newItem.department = item.Dept_Ownership;
+    newItem.serialNumber = item.Serial_Number;
+    newItem.poNumber = item.PO;
+    newItem.warrantyExpiration = fixDate(item.Warranty_EXP);
     newItem.available = (item.Available) ? 'available' : 'unavailable';
-    if (newItem.warrantyExpiration && typeof newItem.warrantyExpiration === 'string') {
-      newItem.warrantyExpiration = new Date(newItem.warrantyExpiration);
-    }
+
     formattedData.push(newItem);
   }
   return formattedData;
@@ -33,17 +46,44 @@ const formatRoomData = (data) => {
     const newRoom = {};
     newRoom.building = room.Building;
     newRoom.room = room.Room;
-    newRoom.date = room.Date;
+    newRoom.date = fixDate(room.Date);
     newRoom.time = room.Time;
     newRoom.available = (room.Available) ? 'available' : 'unavailable';
-    newRoom.reservedBy = room['Reserved by (name)'];
-    newRoom.reservedByNetId = room['Reserved by (netid)'];
-    newRoom.maxOccupancy = room['Max occupancy'];
-    newRoom.type = room['Type of room'];
-    if (newRoom.date && typeof newRoom.date === 'string') {
-      newRoom.date = new Date(newRoom.date);
-    }
+    newRoom.reservedBy = room.Reserved_Name;
+    newRoom.reservedByNetId = room.Reserved_NetID;
+    newRoom.maxOccupancy = room.Max_Occupancy;
+    newRoom.type = (room.Is_Office) ? 'Office' : 'Conference';
+
     formattedData.push(newRoom);
+  }
+  return formattedData;
+};
+
+const formatReservationData = (data) => {
+  const formattedData = [];
+  for (const res of data) {
+    const newRes = {};
+
+    newRes.tag = res.Tag;
+    newRes.category = res.Model_Category;
+    newRes.name = res.Device_Display_Name;
+    newRes.assignedTo = res.Assigned_To;
+    newRes.netId = res.Reserved_NetID;
+    newRes.location = res.Location;
+    newRes.fundingSource = res.Funding_Source;
+    newRes.department = res.Dept_Ownership;
+    newRes.serialNumber = res.Serial_Number;
+    newRes.poNumber = res.PO;
+    newRes.warrantyExpiration = fixDate(res.Warranty_EXP);
+    newRes.available = (res.Available) ? 'available' : 'unavailable';
+
+    newRes.requestedEndDate = fixDate(res.End_Date);
+    newRes.requestedBy = res.Name;
+    newRes.reqNetId = res.NetID;
+    newRes.requestedOnDate = fixDate(res.Request_Date);
+    newRes.requestedStartDate = fixDate(res.Start_Date);
+
+    formattedData.push(newRes);
   }
   return formattedData;
 };
@@ -74,13 +114,21 @@ export const useInventoryStore = defineStore('inventory', () => {
   };
 
   const fetchInventory = async () => {
-    const location = (isDev) ? 'realInventoryTestData.json' : 'db';
+    // const location = (isDev) ? 'realInventoryTestData.json' : 'db';
+    // const location = 'api/v1/devices';
+    const deviceResLocation = `${API}/devices`;
+    const testDataLocation = 'realInventoryTestData.json';
     if (isDev) {
       // simulate a fetch delay
       await sleep(1000);
     }
     try {
-      const response = await fetch(location);
+      // Check if /api is accessible
+      const useApi = await apiAccessible();
+      const selectedLocation = (useApi) ? deviceResLocation : testDataLocation;
+
+      // Fetch device reservations
+      const response = await fetch(selectedLocation);
       const json = await response.json();
       setInventory(json);
     } catch (err) {
@@ -112,19 +160,17 @@ export const useInventoryStore = defineStore('inventory', () => {
   };
 });
 
-export const useReservationStore = defineStore('reservation', () => {
-  const reservations = ref([]);
+export const useDeviceReservationStore = defineStore('deviceReservation', () => {
+  const deviceReservations = ref([]);
 
   const setReservations = (newReservations) => {
-    reservations.value = formatInventoryData(newReservations);
+    deviceReservations.value = formatReservationData(newReservations);
     let id = 0;
-    for (const item of reservations.value) {
-      // item.img = item.img ?? '';
-      if (item.warrantyExpiration && typeof item.warrantyExpiration === 'string') {
-        item.warrantyExpiration = new Date(item.warrantyExpiration);
-      }
 
-      // TODO: Remove with real data
+    const requestsExist = deviceReservations.value.filter((res) => !!res.requestedBy);
+    if (requestsExist.length) return; // don't add fake data if real data exists
+
+    for (const item of deviceReservations.value) {
       // Add reservation data to devices - simulate db JOIN query
       item.id = id;
       id += 1;
@@ -134,26 +180,34 @@ export const useReservationStore = defineStore('reservation', () => {
       } ${
         ['Smith', 'Doe', 'Johnson', 'Williams', 'Brown'][Math.floor(Math.random() * 5)]
       }`;
+      const firstInitial = item.requestedBy[0].toLowerCase();
+      const lastName = item.requestedBy.split(' ')[1].toLowerCase();
+      item.reqNetId = `${firstInitial}${lastName}`;
       // random date between now and 2 weeks from now
       item.requestedOnDate = new Date(Date.now() + Math.floor(Math.random() * 12096e5));
       item.requestedStartDate = new Date(item.requestedOnDate);
       item.requestedEndDate = new Date(item.requestedOnDate.getTime() + 2592e6);
-
-      if (item.requestedOnDate && typeof item.requestedOnDate === 'string') {
-        item.requestedOnDate = new Date(item.requestedOnDate);
-      }
     }
   };
 
   const fetchReservations = async () => {
-    const location = (isDev) ? 'realInventoryTestData.json' : 'db';
+    // const location = (isDev) ? 'realInventoryTestData.json' : 'db';
+    // const location = 'api/v1/device-res';
+    const deviceResLocation = `${API}/device-res`;
+    const testDataLocation = 'realInventoryTestData.json';
     if (isDev) {
       // simulate a fetch delay
       await sleep(1000);
     }
     try {
-      const response = await fetch(location);
+      // Check if /api is accessible
+      const useApi = await apiAccessible();
+      const selectedLocation = (useApi) ? deviceResLocation : testDataLocation;
+
+      // Fetch device reservations
+      const response = await fetch(selectedLocation);
       const json = await response.json();
+
       setReservations(json);
     } catch (err) {
       console.error(err);
@@ -161,11 +215,11 @@ export const useReservationStore = defineStore('reservation', () => {
   };
 
   const setRequest = (id, to) => {
-    for (const reservation of reservations.value) {
+    for (const reservation of deviceReservations.value) {
       if (reservation.id === id) {
         reservation.approved = to;
         // remove the request from the list
-        reservations.value = reservations.value.filter(
+        deviceReservations.value = deviceReservations.value.filter(
           (res) => res.tag !== reservation.tag,
         );
       }
@@ -184,10 +238,10 @@ export const useReservationStore = defineStore('reservation', () => {
     await fetchReservations();
   };
 
-  const getAll = computed(() => reservations.value);
+  const getAll = computed(() => deviceReservations.value);
 
   return {
-    reservations,
+    deviceReservations,
     setReservations,
     fetchReservations,
     approveRequest,
@@ -205,13 +259,21 @@ export const useRoomStore = defineStore('rooms', () => {
   };
 
   const fetchRooms = async () => {
-    const location = (isDev) ? 'realRoomTestData.json' : 'db';
+    // const location = (isDev) ? 'realRoomTestData.json' : 'db';
+    // const location = 'api/v1/rooms';
+    const deviceResLocation = `${API}/rooms`;
+    const testDataLocation = 'realRoomTestData.json';
     if (isDev) {
       // simulate a fetch delay
       await sleep(1000);
     }
     try {
-      const response = await fetch(location);
+      // Check if /api is accessible
+      const useApi = await apiAccessible();
+      const selectedLocation = (useApi) ? deviceResLocation : testDataLocation;
+
+      // Fetch device reservations
+      const response = await fetch(selectedLocation);
       const json = await response.json();
       setRooms(json);
     } catch (err) {

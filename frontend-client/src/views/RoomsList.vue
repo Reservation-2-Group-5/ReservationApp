@@ -13,7 +13,7 @@
       removableSort
       scrollable
       scrollHeight="flex"
-      :rows="10"
+      :rows="25"
       paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
       :rowsPerPageOptions="[10, 25, 50]"
       currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
@@ -74,19 +74,21 @@
           {{ data.maxOccupancy }}
         </template>
         <template #filter="{ filterModel }">
-          <Slider v-model="filterModel.value" range class="m-3" :min="minMaxOccupancy[0]" :max="minMaxOccupancy[1]" />
+          <Slider v-model="filterModel.value" range class="m-3" :min="minOccupancy" :max="maxOccupancy" />
           <div class="flex align-items-center justify-content-between px-2">
-            <span>{{ filterModel.value ? filterModel.value[0] : minMaxOccupancy[0] }}</span>
-            <span>{{ filterModel.value ? filterModel.value[1] : minMaxOccupancy[1] }}</span>
+            <span>{{ filterModel.value ? filterModel.value[0] : minOccupancy }}</span>
+            <span>{{ filterModel.value ? filterModel.value[1] : maxOccupancy }}</span>
           </div>
         </template>
       </Column>
       <Column field="reservedBy" header="Reserved By" v-bind="filterAttributes">
         <template #body="{ data }">
           <ProfileName
+            v-if="data.reservedBy"
             :name="data.reservedBy"
             :image="placeholderAvatar"
             :netId="data.reservedByNetId" />
+          <span v-else>None</span>
         </template>
         <template #filter="{ filterModel }">
           <MultiSelect v-model="filterModel.value" :options="reservees" placeholder="Any" class="p-column-filter">
@@ -169,7 +171,6 @@
 import {
   onMounted,
   ref,
-  computed,
   onBeforeMount,
   watch,
 } from 'vue';
@@ -222,6 +223,8 @@ const dialogPosition = ref('top');
 const reservationStartDate = ref();
 const reservationEndDate = ref();
 const reservationEndDateDisabled = ref(true);
+const minOccupancy = ref(0);
+const maxOccupancy = ref(100);
 
 // set the default filter operators and constraints
 const filters = ref();
@@ -244,22 +247,27 @@ const filterAttributes = {
   },
 };
 
-const minMaxOccupancy = computed(() => {
+function computeOccupancyRange() {
+  if (!rooms.value?.length) {
+    return [0, 100];
+  }
   const min = Math.min(...rooms.value.map((r) => r.maxOccupancy));
   const max = Math.max(...rooms.value.map((r) => r.maxOccupancy));
+  minOccupancy.value = min;
+  maxOccupancy.value = max;
   return [min, max];
-});
+}
 
 // clear the filters
 const clearFilter = () => {
   clearFilters(filters);
   filters.value.available.constraints[0].value = 'available';
-  filters.value.maxOccupancy.value = minMaxOccupancy.value;
+  filters.value.maxOccupancy.value = computeOccupancyRange();
 };
 onBeforeMount(() => {
-  initFilters(filters);
+  initFilters(filters, 'room');
   filters.value.available.constraints[0].value = 'available';
-  filters.value.maxOccupancy.value = minMaxOccupancy.value;
+  filters.value.maxOccupancy.value = computeOccupancyRange();
 });
 
 // set the color of the status tag
@@ -398,6 +406,12 @@ watch(reservationStartDate, (newVal) => {
     minEndDate.value = roundMinutes(minEndDate.value);
   } else {
     reservationEndDateDisabled.value = true;
+  }
+});
+
+watch(rooms, (newRooms, oldRooms) => {
+  if (oldRooms.length === 0 && newRooms.length !== oldRooms.length) {
+    filters.value.maxOccupancy.value = computeOccupancyRange();
   }
 });
 
