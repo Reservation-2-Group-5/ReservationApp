@@ -52,7 +52,12 @@
       </Column>
       <Column field="assignedTo" header="Assigned To" v-bind="filterAttributes" style="min-width: 11rem">
         <template #body="{ data }">
-          <ProfileName :name="data.assignedTo" :image="placeholderAvatar" :netId="data.netId" />
+          <ProfileName
+            v-if="data.assignedTo"
+            :name="data.assignedTo"
+            :image="placeholderAvatar"
+            :netId="data.netId" />
+          <span v-else>None</span>
         </template>
         <template #filter="{ filterModel }">
           <MultiSelect v-model="filterModel.value" :options="assignees" placeholder="Any" class="p-column-filter">

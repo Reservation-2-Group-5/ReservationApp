@@ -117,6 +117,7 @@ export async function fetchData(store, loading, filterLists) {
 
 // format the date to a readable format
 export function formatDate(date) {
+  if (!date) return '';
   return date.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',

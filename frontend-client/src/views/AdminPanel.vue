@@ -6,7 +6,7 @@
       v-model:filters="filters"
       v-model:expandedRows="expandedRows"
       filterDisplay="menu"
-      :value="reservations"
+      :value="deviceReservations"
       dataKey="tag"
       paginator
       removableSort
@@ -23,7 +23,7 @@
       class="reservations-table">
       <template #header>
         <HeaderPanel
-          name="Admin - Pending Reservations"
+          name="Admin - Pending Device Reservations"
           :filters="filters"
           :fetchData="requestData"
           :clearFilters="clearFilter"
@@ -58,7 +58,12 @@
           <span class="p-column-title" v-tooltip.top="'Assigned To'">Asgn To</span>
         </template>
         <template #body="{ data }">
-          <ProfileName :name="data.assignedTo" :image="placeholderAvatar" :netId="data.netId" />
+          <ProfileName
+            v-if="data.assignedTo"
+            :name="data.assignedTo"
+            :image="placeholderAvatar"
+            :netId="data.netId" />
+          <span v-else>None</span>
         </template>
         <template #filter="{ filterModel }">
           <MultiSelect v-model="filterModel.value" :options="assignees.sort()" placeholder="Any" class="p-column-filter">
@@ -119,7 +124,7 @@
           <span class="p-column-title" v-tooltip.top="'Requested By'">Req By</span>
         </template>
         <template #body="{ data }">
-          <ProfileName :name="data.requestedBy" :image="placeholderAvatar" :netId="data.netId" />
+          <ProfileName :name="data.requestedBy" :image="placeholderAvatar" :netId="data.reqNetId" />
         </template>
         <template #filter="{ filterModel }">
           <MultiSelect v-model="filterModel.value" :options="requestees.sort()" placeholder="Any" class="p-column-filter">
@@ -206,7 +211,7 @@ import MultiSelect from 'primevue/multiselect';
 import Calendar from 'primevue/calendar';
 import Toast from 'primevue/toast';
 import { useRouter } from 'vue-router';
-import { useUserStore, useReservationStore } from '@/store';
+import { useUserStore, useDeviceReservationStore } from '@/store';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue/usetoast';
 import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
@@ -223,9 +228,9 @@ const placeholderAvatar = 'https://images.placeholders.dev/?width=48&height=48';
 
 // setup the data stores
 const userStore = useUserStore();
-const reservationStore = useReservationStore();
+const deviceReservationStore = useDeviceReservationStore();
 const { isAdmin } = storeToRefs(userStore);
-const { reservations } = storeToRefs(reservationStore);
+const { deviceReservations } = storeToRefs(deviceReservationStore);
 
 // initialize the toast notifications
 const toast = useToast();
@@ -268,7 +273,8 @@ const filterAttributes = {
 };
 
 // create a list of item names for the autocomplete
-const itemNames = computed(() => reservationStore.reservations.map((item) => item.name));
+const itemNames = computed(() => deviceReservationStore.deviceReservations
+  .map((item) => item.name));
 const filteredItems = ref([]);
 
 function search(event) {
@@ -276,7 +282,7 @@ function search(event) {
 }
 
 function approveRequest(reservation) {
-  reservationStore.approveRequest(reservation.id);
+  deviceReservationStore.approveRequest(reservation.id);
   toast.add({
     severity: 'success',
     summary: 'Reservation Approved',
@@ -286,7 +292,7 @@ function approveRequest(reservation) {
 }
 
 function denyRequest(reservation) {
-  reservationStore.denyRequest(reservation.id);
+  deviceReservationStore.denyRequest(reservation.id);
   toast.add({
     severity: 'warn',
     summary: 'Reservation Denied',
@@ -296,7 +302,7 @@ function denyRequest(reservation) {
 }
 
 async function requestData() {
-  await fetchData(reservationStore, loading, lists);
+  await fetchData(deviceReservationStore, loading, lists);
 }
 
 const router = useRouter();

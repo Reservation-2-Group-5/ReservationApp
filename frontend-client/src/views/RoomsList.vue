@@ -13,7 +13,7 @@
       removableSort
       scrollable
       scrollHeight="flex"
-      :rows="10"
+      :rows="25"
       paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
       :rowsPerPageOptions="[10, 25, 50]"
       currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
@@ -84,9 +84,11 @@
       <Column field="reservedBy" header="Reserved By" v-bind="filterAttributes">
         <template #body="{ data }">
           <ProfileName
+            v-if="data.reservedBy"
             :name="data.reservedBy"
             :image="placeholderAvatar"
             :netId="data.reservedByNetId" />
+          <span v-else>None</span>
         </template>
         <template #filter="{ filterModel }">
           <MultiSelect v-model="filterModel.value" :options="reservees" placeholder="Any" class="p-column-filter">
@@ -246,13 +248,11 @@ const filterAttributes = {
 };
 
 function computeOccupancyRange() {
-  console.log('rooms', rooms.value);
   if (!rooms.value?.length) {
     return [0, 100];
   }
   const min = Math.min(...rooms.value.map((r) => r.maxOccupancy));
   const max = Math.max(...rooms.value.map((r) => r.maxOccupancy));
-  console.log('minMaxOccupancy', min, max);
   minOccupancy.value = min;
   maxOccupancy.value = max;
   return [min, max];
