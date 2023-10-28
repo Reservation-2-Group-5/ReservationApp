@@ -10,7 +10,7 @@
       dataKey="tag"
       paginator
       removableSort
-      sortField="requestedDate"
+      sortField="requestedOnDate"
       :sortOrder="1"
       scrollable
       scrollHeight="flex"
@@ -18,7 +18,7 @@
       paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
       :rowsPerPageOptions="[10, 25, 50]"
       currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
-      :globalFilterFields="['tag', 'category', 'name', 'assignedTo', 'location', 'fundingSource', 'department', 'serialNumber', 'poNumber', 'warrantyExpiration', 'requestedBy', 'requestedDate', 'requestedStartDate', 'requestedEndDate']"
+      :globalFilterFields="['tag', 'category', 'name', 'assignedTo', 'location', 'fundingSource', 'department', 'serialNumber', 'poNumber', 'requestedBy']"
       tableStyle="min-width: 50rem;"
       class="reservations-table">
       <template #header>
