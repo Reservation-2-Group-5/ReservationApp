@@ -1,131 +1,16 @@
 <template>
   <Toast />
   <div class="card">
-    <DataTable
-      :loading="loading"
-      v-model:selection="selectedRooms"
-      v-model:filters="filters"
-      filterDisplay="menu"
-      :value="rooms"
-      @update:selection="clearSelection"
-      :metaKeySelection="false"
-      paginator
-      removableSort
-      scrollable
-      scrollHeight="flex"
-      :rows="25"
-      paginatorTemplate="JumpToPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-      :rowsPerPageOptions="[10, 25, 50]"
-      currentPageReportTemplate="Showing {first}-{last} of {totalRecords}"
-      :globalFilterFields="[]"
-      tableStyle="min-width: 50rem;"
-      class="room-table">
-      <template #header>
-        <HeaderPanel
-          name="Rooms List"
-          :filters="filters"
-          :fetchData="requestData"
-          :clearFilters="clearFilter"
-          @inputUpdate="filters['global'].value = $event" />
-      </template>
-      <template #empty v-if="!loading">No rooms found.</template>
-      <Column selectionMode="multiple" />
-      <Column field="building" header="Building" v-bind="filterAttributes">
-        <template #body="{ data }">
-          {{ data.building }}
-        </template>
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="buildings" placeholder="Any" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="room" header="Room" v-bind="filterAttributes">
-        <template #body="{ data }">
-          {{ data.room }}
-        </template>
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="roomNumbers" placeholder="Any" class="p-column-filter" />
-        </template>
-      </Column>
+    <div class="top">
+      <Dropdown :loading="loading" v-model="selectedRoom" :options="groupedRooms" optionLabel="label" optionGroupLabel="label" optionGroupChildren="items" :placeholder="dropdownPlaceholder" style="width: fit-content" @update:modelValue="setEvents" ref="dropdown" />
+      <h3 v-if="selectedRoom">{{ selectedRoom.value.split(";").join(" - ") }}</h3>
+      <div ref="padder" class="padder" />
+    </div>
+    <ProgressBar v-if="loading" mode="indeterminate" style="height: 6px" />
 
-      <!-- TODO: Combine date+time and use a calendar range selector -->
-      <Column field="date" header="Date" dataType="date" v-bind="filterAttributes" :showFilterMatchModes="true" :maxConstraints="2">
-        <template #body="{ data }">
-          {{ formatDate(data.date) }}
-        </template>
-        <template #filter="{ filterModel }">
-          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
-        </template>
-      </Column>
-      <Column field="time" header="Time" v-bind="filterAttributes">
-        <template #body="{ data }">
-          {{ data.time }}
-        </template>
-        <template #filter="{ filterModel }">
-          <Slider v-model="filterModel.value" range class="m-3" :min="0" :max="23" />
-          <div class="flex align-items-center justify-content-between px-2">
-            <span>{{ numToTime((filterModel.value?.[0]) ? filterModel.value[0] : 0) }}</span>
-            <span>{{ numToTime((filterModel.value?.[1]) ? filterModel.value[1] : 23) }}</span>
-          </div>
-        </template>
-      </Column>
-
-      <Column field="maxOccupancy" header="Max Occupancy" v-bind="filterAttributes">
-        <template #body="{ data }">
-          {{ data.maxOccupancy }}
-        </template>
-        <template #filter="{ filterModel }">
-          <Slider v-model="filterModel.value" range class="m-3" :min="minOccupancy" :max="maxOccupancy" />
-          <div class="flex align-items-center justify-content-between px-2">
-            <span>{{ filterModel.value ? filterModel.value[0] : minOccupancy }}</span>
-            <span>{{ filterModel.value ? filterModel.value[1] : maxOccupancy }}</span>
-          </div>
-        </template>
-      </Column>
-      <Column field="reservedBy" header="Reserved By" v-bind="filterAttributes">
-        <template #body="{ data }">
-          <ProfileName
-            v-if="data.reservedBy"
-            :name="data.reservedBy"
-            :image="placeholderAvatar"
-            :netId="data.reservedByNetId" />
-          <span v-else>None</span>
-        </template>
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="reservees" placeholder="Any" class="p-column-filter">
-            <template #option="slotProps">
-              <ProfileName :name="slotProps.option" :image="placeholderAvatar" />
-            </template>
-          </MultiSelect>
-        </template>
-      </Column>
-      <Column field="type" header="Type" v-bind="filterAttributes">
-        <template #body="{ data }">
-          {{ data.type }}
-        </template>
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="roomTypes" placeholder="Any" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="available" header="Status" v-bind="filterAttributes">
-        <template #body="{ data }">
-          <Tag
-            :value="data.available"
-            :severity="getSeverity(data.available)" />
-        </template>
-        <template #filter="{ filterModel }">
-          <Dropdown v-model="filterModel.value" :options="statuses" placeholder="Select One" class="p-column-filter" showClear>
-            <template #option="{ option }">
-              <Tag :value="option" :severity="getSeverity(option)" />
-            </template>
-          </Dropdown>
-        </template>
-      </Column>
-      <template #paginatorend>
-        <div class="submit-btn">
-          <Button type="submit" icon="pi pi-check-square" label="Submit" @click.prevent="submitSelection" />
-        </div>
-      </template>
-    </DataTable>
+    <div v-if="selectedRoom" class="calendar">
+      <FullCalendar :options="calendarOptions" ref="calendar" />
+    </div>
   </div>
   <Dialog v-model:visible="dialogVisible" :position="dialogPosition" modal header="Header" :style="{ width: '50vw' }">
     <template #container="slotProps">
@@ -137,24 +22,53 @@
         <template #content>
           <div class="dialog-date-selections">
             <span class="p-float-label">
-              <Calendar v-model="reservationStartDate" inputId="reservation-start-date" dateFormat="mm/dd/yy" showTime hourFormat="12" :minDate="minStartDate" showButtonBar selectionMode="single" showIcon hideOnDateTimeSelect />
+              <Calendar
+                v-model="selectedStartDate"
+                inputId="reservation-start-date"
+                showTime
+                hourFormat="12"
+                selectionMode="single"
+                :stepMinute="60"
+                showIcon
+                hideOnDateTimeSelect
+                showButtonBar
+                timeSeparator=""
+                @update:modelValue="disallowMinutes"
+                :pt="{
+                  minutePicker: { style: 'display: none' },
+                  separatorContainer: { style: 'padding: 0 0.25rem' },
+                }" />
               <label for="reservation-start-date">Reservation Start Date</label>
             </span>
             <span class="p-float-label">
-              <Calendar v-model="reservationEndDate" inputId="reservation-end-date" dateFormat="mm/dd/yy" showTime hourFormat="12" :minDate="minEndDate" showButtonBar selectionMode="single" showIcon :disabled="reservationEndDateDisabled" hideOnDateTimeSelect />
+              <Calendar
+                v-model="selectedEndDate"
+                inputId="reservation-end-date"
+                showTime
+                hourFormat="12"
+                :minDate="minEndDate"
+                selectionMode="single"
+                :stepMinute="60"
+                showIcon
+                :disabled="reservationEndDateDisabled"
+                hideOnDateTimeSelect
+                showButtonBar
+                timeSeparator=""
+                @update:modelValue="disallowMinutes"
+                :pt="{
+                  minutePicker: { style: 'display: none' },
+                  separatorContainer: { style: 'padding: 0 0.25rem' },
+                }" />
               <label for="reservation-end-date">Reservation End Date</label>
             </span>
           </div>
           <div class="dialog-details">
-            <h1>{{ selectedRooms[0].name }}</h1>
+            <h1>{{ selectedRoom.value.split(";").join(" - ") }}</h1>
             <div class="dialog-details-inner">
-              <p><span class="bold">Building:</span> {{ selectedRooms[0].building }}</p>
-              <p><span class="bold">Room:</span> {{ selectedRooms[0].room }}</p>
-              <p><span class="bold">Date:</span> {{ formatDate(selectedRooms[0].date) }}</p>
-              <p><span class="bold">Time:</span> {{ selectedRooms[0].time }}</p>
-              <p><span class="bold">Max Occupancy:</span> {{ selectedRooms[0].maxOccupancy }}</p>
-              <p><span class="bold">Reserved By:</span> {{ `${selectedRooms[0].reservedBy} (${selectedRooms[0].reservedByNetId})` }}</p>
-              <p><span class="bold">Type:</span> {{ selectedRooms[0].type }}</p>
+              <p><span class="bold">Building:</span> {{ selectedRoom.value.split(";")[0] }}</p>
+              <p><span class="bold">Room:</span> {{ selectedRoom.value.split(";")[1] }}</p>
+              <p><span class="bold">Max Occupancy:</span> {{ selectedRoomOccupancy }}</p>
+              <p><span class="bold">Type:</span> {{ selectedRoomType }}</p>
             </div>
           </div>
           <div class="dialog-buttons">
@@ -169,36 +83,28 @@
 
 <script setup>
 import {
-  onMounted,
   ref,
-  onBeforeMount,
+  onMounted,
+  computed,
+  reactive,
   watch,
 } from 'vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Tag from 'primevue/tag';
-import Button from 'primevue/button';
+import FullCalendar from '@fullcalendar/vue3';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import ProgressBar from 'primevue/progressbar';
 import Dropdown from 'primevue/dropdown';
-import Calendar from 'primevue/calendar';
-import MultiSelect from 'primevue/multiselect';
+import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import Divider from 'primevue/divider';
 import Card from 'primevue/card';
-import Slider from 'primevue/slider';
+import Divider from 'primevue/divider';
+import Calendar from 'primevue/calendar';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
-import { storeToRefs } from 'pinia';
-import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
-import ProfileName from '@/components/inventory-list/ProfileName.vue';
 import { useRoomStore } from '@/store';
-import {
-  formatDate,
-  initFilters,
-  fetchData,
-  clearFilters,
-} from '@/utils/dataTableFilters';
+import { storeToRefs } from 'pinia';
 
-const placeholderAvatar = 'https://images.placeholders.dev/?width=32&height=32';
+const unavailableColor = '#66000088';
 
 // get the inventory store
 const roomStore = useRoomStore();
@@ -211,248 +117,306 @@ const toastDuration = 5000;
 
 // create the reactive variables
 const loading = ref(false);
-const selectedRooms = ref();
-const statuses = ref([]);
-const buildings = ref([]);
-const roomNumbers = ref([]);
-const reservees = ref([]);
-const roomTypes = ref([]);
+const calendar = ref(null);
+const events = ref([]);
+const selectedRoom = ref(null);
+const selectedRoomOccupancy = ref(null);
+const selectedRoomType = ref(null);
+const groupedRooms = ref([]);
+const padder = ref(null);
+const dropdown = ref(null);
+const selectedStartDate = ref(null);
+const selectedEndDate = ref(null);
 
 const dialogVisible = ref(false);
 const dialogPosition = ref('top');
-const reservationStartDate = ref();
-const reservationEndDate = ref();
+const minEndDate = ref(null);
 const reservationEndDateDisabled = ref(true);
-const minOccupancy = ref(0);
-const maxOccupancy = ref(100);
 
-// set the default filter operators and constraints
-const filters = ref();
-const lists = {
-  available: statuses,
-  building: buildings,
-  room: roomNumbers,
-  reservedBy: reservees,
-  type: roomTypes,
-};
-
-// set the default column filter attributes to bind
-const filterAttributes = {
-  sortable: true,
-  showFilterMatchModes: false,
-  showFilterOperator: false,
-  maxConstraints: 1,
-  filterMenuStyle: {
-    width: '14rem',
-  },
-};
-
-function computeOccupancyRange() {
-  if (!rooms.value?.length) {
-    return [0, 100];
-  }
-  const min = Math.min(...rooms.value.map((r) => r.maxOccupancy));
-  const max = Math.max(...rooms.value.map((r) => r.maxOccupancy));
-  minOccupancy.value = min;
-  maxOccupancy.value = max;
-  return [min, max];
+// round minutes of date to the nearest hour
+function disallowMinutes(date) {
+  date.setMinutes(0, 0, 0); // Resets seconds and milliseconds to 0
+  return date;
 }
 
-// clear the filters
-const clearFilter = () => {
-  clearFilters(filters);
-  filters.value.available.constraints[0].value = 'available';
-  filters.value.maxOccupancy.value = computeOccupancyRange();
-};
-onBeforeMount(() => {
-  initFilters(filters, 'room');
-  filters.value.available.constraints[0].value = 'available';
-  filters.value.maxOccupancy.value = computeOccupancyRange();
+function setEvents() {
+  // console.log(info);
+  events.value = [];
+  if (!selectedRoom.value) return;
+  rooms.value.forEach((r) => {
+    if (r.available === 'available') return;
+    const [currentBuilding, currentRoom] = selectedRoom.value.value.split(';');
+    if (!currentBuilding || !currentRoom) return;
+    if (r.building !== currentBuilding) return;
+    if (r.room !== currentRoom) return;
+    const {
+      date,
+      time,
+    } = r;
+
+    selectedRoomOccupancy.value = r.maxOccupancy;
+    selectedRoomType.value = (r.isOffice) ? 'Office' : 'Conference Room';
+
+    // create new date from date+time for start
+    const start = new Date(date);
+    start.setHours(time, 0, 0, 0);
+
+    // add one hour for end
+    const end = new Date(start);
+    end.setHours(time + 1);
+
+    events.value.push({
+      // https://fullcalendar.io/docs/event-object
+      title: `${r.reservedBy} (${r.reservedByNetId})`, // `${building} - ${room}`,
+      start,
+      end,
+      color: unavailableColor,
+      textColor: '#eee',
+      display: 'background',
+    });
+  });
+}
+
+const dropdownPlaceholder = computed(() => (loading.value ? 'Loading...' : 'Select a room'));
+const roomsByBuilding = computed(() => {
+  const container = {};
+  rooms.value.forEach((room) => {
+    const { building, room: roomName } = room;
+    if (!container[building]) {
+      container[building] = [];
+    }
+    if (!container[building].includes(roomName)) {
+      container[building].push(roomName);
+    }
+  });
+  return container;
 });
 
-// set the color of the status tag
-function getSeverity(status) {
-  if (status === 'unavailable') {
-    return 'danger';
-  }
-  return 'success';
+function clearSelection() {
+  // clear the selection
+  calendar.value.getApi().unselect();
+  selectedStartDate.value = null;
+  selectedEndDate.value = null;
 }
 
-// clear the selection when the user clicks the select all button
-// or set the selection to the last item selected when the user clicks a different item
-function clearSelection(event) {
-  // when the user selects a different item, the event is an array of length 2
-  // the first item is the previous selection and the second item is the current selection
-  const currentSelection = (event.length && event.length <= 2) ? event[event.length - 1] : null;
-  selectedRooms.value = (currentSelection) ? [currentSelection] : [];
-}
-
-function numToTime(num) {
-  // input is a number from 0 to 23
-  // output is a string in the format "hh AM/PM"
-  if (num === 0) {
-    return '12 AM';
-  }
-  if (num < 12) {
-    return `${num} AM`;
-  }
-  if (num === 12) {
-    return '12 PM';
-  }
-  return `${num - 12} PM`;
-}
-
-// submit the selected row
-function submitSelection() {
-  if (!selectedRooms.value?.length) {
+function handleSubmit() {
+  if (!selectedStartDate.value || !selectedEndDate.value) {
     toast.add({
       severity: 'error',
-      summary: 'No room selected',
-      detail: 'Please select at least one room to submit',
+      summary: 'Error',
+      detail: 'Please select a start and end date.',
       life: toastDuration,
     });
     return;
   }
-  if (selectedRooms.value.length > 1) {
-    toast.add({
-      severity: 'warn',
-      summary: 'Multiple rooms selected',
-      detail: 'Only one room can be submitted at a time',
-      life: toastDuration,
-    });
-    return;
-  }
-
-  // don't allow the user to submit request for an unavailable room
-  if (selectedRooms.value[0].available === 'unavailable') {
+  if (selectedStartDate.value >= selectedEndDate.value) {
     toast.add({
       severity: 'error',
-      summary: 'Room is unavailable',
-      detail: 'Please select an available room',
+      summary: 'Error',
+      detail: 'Start date must be before end date.',
       life: toastDuration,
     });
     return;
   }
+  if (selectedStartDate.value.toLocaleDateString() !== selectedEndDate.value.toLocaleDateString()) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Start date and end date must be on the same day.',
+      life: toastDuration,
+    });
+    return;
+  }
+  const [building, room] = selectedRoom.value.value.split(';');
+  const start = selectedStartDate.value.toLocaleDateString();
+  const date = selectedStartDate.value.toLocaleDateString();
+  const startHour = selectedStartDate.value.getHours();
+  const endHour = selectedEndDate.value.getHours();
 
-  console.log('selectedRooms', selectedRooms.value[0]);
-  // open the dialog to set the reservation dates
-  dialogVisible.value = true;
+  // find room entries that match the selected room and time blocks
+  const roomEntries = rooms.value.filter((r) => r.building === building
+    && r.room === room
+    && r.time >= startHour
+    && r.time < endHour
+    && r.date.toLocaleDateString() === date);
+
+  // TODO: submit reservation request to api backend here
+  console.log(roomEntries); // all the room entries that match the selected room and time blocks
+
+  const startTime = selectedStartDate.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const endTime = selectedEndDate.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  toast.add({
+    severity: 'success',
+    summary: 'Submitted Reservation Request',
+    detail: `${building} - ${room} requested for ${start} from ${startTime} to ${endTime}.`,
+    life: toastDuration,
+  });
+
+  // add the events to the calendar
+  const tempEvents = [];
+  for (const entry of roomEntries) {
+    // use the date from the room entry
+    const startDate = new Date(entry.date);
+    startDate.setHours(entry.time, 0, 0, 0);
+    const endDate = new Date(entry.date);
+    endDate.setHours(entry.time + 1, 0, 0, 0);
+
+    tempEvents.push({
+      // TODO: add logged in user's name and netid
+      title: 'You',
+      start: startDate,
+      end: endDate,
+      color: unavailableColor,
+      textColor: '#fff',
+      display: 'background',
+    });
+  }
+  // add the events to the calendar
+  calendar.value.getApi().addEventSource(tempEvents);
+
+  clearSelection();
 }
 
 // close the dialog box
 function closeDialog(closeFn) {
   dialogVisible.value = false;
-  reservationStartDate.value = null;
-  reservationEndDate.value = null;
+  clearSelection();
   closeFn();
 }
 
-// submit the reservation to the server
+// submit the reservation
 function submitReservation(closeFn) {
-  if (!reservationStartDate.value || !reservationEndDate.value) {
-    toast.add({
-      severity: 'error',
-      summary: 'Invalid date',
-      detail: 'Please select a valid date',
-      life: toastDuration,
-    });
-    return;
-  }
-  if (reservationStartDate.value > reservationEndDate.value) {
-    toast.add({
-      severity: 'error',
-      summary: 'Invalid date range',
-      detail: 'Please select a valid date range',
-      life: toastDuration,
-    });
-    return;
-  }
-
-  // TODO: submit reservation to server, mark item as unavailable
-  toast.add({
-    severity: 'success',
-    summary: 'Reservation submitted',
-    detail: `Your ${selectedRooms.value[0].name} reservation has been submitted for ${formatDate(reservationStartDate.value)} to ${formatDate(reservationEndDate.value)}}`,
-    life: toastDuration,
-  });
-  selectedRooms.value[0].available = 'unavailable';
-  selectedRooms.value = [];
+  handleSubmit();
   closeDialog(closeFn);
 }
 
-// round minutes of date to the nearest hour
-function roundMinutes(date) {
-  date.setHours(date.getHours() + Math.ceil(date.getMinutes() / 60));
-  date.setMinutes(0, 0, 0); // Resets seconds and milliseconds to 0
-  return date;
+function handleSelect(selectionInfo) {
+  if (selectionInfo.startStr === selectedStartDate.value) {
+    clearSelection();
+  } else {
+    selectedStartDate.value = selectionInfo.start;
+    selectedEndDate.value = selectionInfo.end;
+    dialogVisible.value = true;
+  }
 }
 
-// set the min start date to the current date rounded to the nearest hour
-const minStartDate = ref(roundMinutes(new Date()));
-minStartDate.value = roundMinutes(minStartDate.value);
+const calendarOptions = reactive({
+  // https://fullcalendar.io/docs/timegrid-view
+  plugins: [timeGridPlugin, interactionPlugin],
+  initialView: 'timeGridWeek',
+  headerToolbar: {
+    left: 'prev,next today',
+    center: 'title',
+    right: 'timeGridWeek,timeGridDay',
+  },
+  allDaySlot: false,
+  slotDuration: '01:00:00',
+  height: '100%',
+  expandRows: true,
+  selectable: true,
+  selectOverlap: false,
+  select: handleSelect,
+  eventMouseEnter: (mouseEnterInfo) => {
+    // set cursor to disabled if event is not available
+    if (mouseEnterInfo.event.backgroundColor === unavailableColor) {
+      mouseEnterInfo.el.style.cursor = 'not-allowed';
+    }
+  },
+  eventClick: (clickInfo) => {
+    // prevent click if event is not available
+    if (clickInfo.event.backgroundColor === unavailableColor) {
+      clickInfo.jsEvent.preventDefault();
+      clickInfo.jsEvent.stopPropagation();
+      // send toast notification
+      const [building, room] = selectedRoom.value.value.split(';');
+      const time = clickInfo.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const date = clickInfo.event.start.toLocaleDateString();
+      toast.add({
+        severity: 'error',
+        summary: 'Unavailable',
+        detail: `${building} - ${room} is unavailable at ${time} on ${date}.`,
+        life: toastDuration,
+      });
+    }
+  },
+  events,
+});
 
-// set the default min end date to the min start date + 31 days
-const minEndDate = ref(new Date());
-minEndDate.value.setDate(minStartDate.value.getDate() + 31);
-minEndDate.value = roundMinutes(minEndDate.value);
-
-// disable the end date input until the start date is selected
-// and set the min end date to the selected start date + 1 day
-watch(reservationStartDate, (newVal) => {
+watch(selectedStartDate, (newVal) => {
   if (newVal && newVal instanceof Date) {
     reservationEndDateDisabled.value = false;
     minEndDate.value = new Date(newVal);
-    minEndDate.value.setDate(minEndDate.value.getDate() + 1);
-    minEndDate.value = roundMinutes(minEndDate.value);
   } else {
     reservationEndDateDisabled.value = true;
   }
 });
 
-watch(rooms, (newRooms, oldRooms) => {
-  if (oldRooms.length === 0 && newRooms.length !== oldRooms.length) {
-    filters.value.maxOccupancy.value = computeOccupancyRange();
-  }
-});
-
-async function requestData() {
-  await fetchData(roomStore, loading, lists);
-}
-
-// fetch data when the view is created
 onMounted(async () => {
-  await requestData();
+  loading.value = true;
+  try {
+    await roomStore.fetchAll();
+    // create an array of unique building labels with an items key for the rooms
+    groupedRooms.value = Object.keys(roomsByBuilding.value).map((building) => ({
+      label: building,
+      items: roomsByBuilding.value[building].map((room) => {
+        const occupancy = rooms.value
+          .find((r) => r.building === building && r.room === room).maxOccupancy;
+        return {
+          label: `${room} (Capacity ${occupancy})`,
+          value: `${building};${room}`,
+        };
+      }),
+    }));
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.message,
+      life: toastDuration,
+    });
+  } finally {
+    loading.value = false;
+    // get the width from bounding rect of the dropdown
+    const { width } = dropdown.value.$el.getBoundingClientRect();
+    // set the width of the padder to the width of the dropdown
+    padder.value.style.width = `${width}px`;
+  }
 });
 </script>
 
 <style scoped>
 .card {
   height: 100%;
-}
-
-.room-table {
-  flex: 1;
-}
-
-.submit-btn {
+  background: #2a323d;
+  padding: 1rem;
+  border-radius: 0 0 4px 4px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
 }
 
-:deep([data-pc-section="headercheckboxwrapper"]) {
-  display: none;
+.calendar {
+  height: 100%;
 }
 
-:deep(.p-paginator-right-content) {
-  margin-left: 20px;
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-:deep(.p-card-content) {
-  padding: 0;
+.padder {
+  display: flex;
+  justify-content: flex-end;
 }
 
-:deep(.p-paginator-bottom) {
-  border-top: 3px solid var(--surface-d);
+:deep(.p-tabview-panels) {
+  padding-left: 0;
+  padding-top: 5px;
+}
+
+:deep(.fc .fc-bg-event) {
+  opacity: 0.8;
 }
 
 .dialog-buttons {
@@ -514,5 +478,9 @@ onMounted(async () => {
 
 .bold {
   font-weight: 600;
+}
+
+:deep(.minute-time-picker) {
+  display: none;
 }
 </style>
