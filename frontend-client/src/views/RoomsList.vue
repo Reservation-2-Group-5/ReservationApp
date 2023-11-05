@@ -106,9 +106,8 @@ import { storeToRefs } from 'pinia';
 
 const unavailableColor = '#66000088';
 
-// get the inventory store
+// get the room store
 const roomStore = useRoomStore();
-// const inventoryList = ref([]);
 const { rooms } = storeToRefs(roomStore);
 
 // initialize the toast notifications
@@ -143,6 +142,7 @@ function setEvents() {
   // console.log(info);
   events.value = [];
   if (!selectedRoom.value) return;
+  const tempEvents = [];
   rooms.value.forEach((r) => {
     if (r.available === 'available') return;
     const [currentBuilding, currentRoom] = selectedRoom.value.value.split(';');
@@ -165,7 +165,7 @@ function setEvents() {
     const end = new Date(start);
     end.setHours(time + 1);
 
-    events.value.push({
+    tempEvents.push({
       // https://fullcalendar.io/docs/event-object
       title: `${r.reservedBy} (${r.reservedByNetId})`, // `${building} - ${room}`,
       start,
@@ -175,6 +175,7 @@ function setEvents() {
       display: 'background',
     });
   });
+  events.value = tempEvents;
 }
 
 const dropdownPlaceholder = computed(() => (loading.value ? 'Loading...' : 'Select a room'));
@@ -207,7 +208,7 @@ function handleSubmit() {
       detail: 'Please select a start and end date.',
       life: toastDuration,
     });
-    return;
+    return false;
   }
   if (selectedStartDate.value >= selectedEndDate.value) {
     toast.add({
@@ -216,7 +217,7 @@ function handleSubmit() {
       detail: 'Start date must be before end date.',
       life: toastDuration,
     });
-    return;
+    return false;
   }
   if (selectedStartDate.value.toLocaleDateString() !== selectedEndDate.value.toLocaleDateString()) {
     toast.add({
@@ -225,7 +226,7 @@ function handleSubmit() {
       detail: 'Start date and end date must be on the same day.',
       life: toastDuration,
     });
-    return;
+    return false;
   }
   const [building, room] = selectedRoom.value.value.split(';');
   const start = selectedStartDate.value.toLocaleDateString();
@@ -239,6 +240,18 @@ function handleSubmit() {
     && r.time >= startHour
     && r.time < endHour
     && r.date.toLocaleDateString() === date);
+
+  // ensure that the room is available for the selected time blocks
+  const unavailableEntries = roomEntries.filter((r) => r.available !== 'available');
+  if (unavailableEntries.length > 0) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: `${building} - ${room} is unavailable at the selected time.`,
+      life: toastDuration,
+    });
+    return false;
+  }
 
   // TODO: submit reservation request to api backend here
   console.log(roomEntries); // all the room entries that match the selected room and time blocks
@@ -274,7 +287,7 @@ function handleSubmit() {
   // add the events to the calendar
   calendar.value.getApi().addEventSource(tempEvents);
 
-  clearSelection();
+  return true;
 }
 
 // close the dialog box
@@ -286,8 +299,10 @@ function closeDialog(closeFn) {
 
 // submit the reservation
 function submitReservation(closeFn) {
-  handleSubmit();
-  closeDialog(closeFn);
+  const close = handleSubmit();
+  if (close) {
+    closeDialog(closeFn);
+  }
 }
 
 function handleSelect(selectionInfo) {

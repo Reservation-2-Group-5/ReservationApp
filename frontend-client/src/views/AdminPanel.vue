@@ -1,11 +1,11 @@
 <template>
   <div class="card">
-    <TabView>
+    <TabView :lazy="true">
       <TabPanel header="Device Reservations">
         <AdminDeviceRes />
       </TabPanel>
       <TabPanel header="Room Reservations">
-        <!-- <AdminRoomRes /> -->
+        <AdminRoomRes />
       </TabPanel>
     </TabView>
   </div>
@@ -14,6 +14,7 @@
 <script setup>
 import { onBeforeMount } from 'vue';
 import AdminDeviceRes from '@/components/AdminDeviceRes.vue';
+import AdminRoomRes from '@/components/AdminRoomRes.vue';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import { useUserStore } from '@/store';
