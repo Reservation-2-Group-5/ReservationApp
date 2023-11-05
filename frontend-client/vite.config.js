@@ -28,8 +28,6 @@ const filePathsToExclude = filesToExclude.map((file) => fileURLToPath(new URL(
   import.meta.url,
 )));
 
-const isDev = (process.env.NODE_ENV === 'development');
-
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [plugin()],
@@ -44,7 +42,7 @@ export default defineConfig({
   server: {
     proxy: {
       '^/api': {
-        target: (isDev) ? 'http://localhost:7268/' : 'https://localhost:7268/',
+        target: 'https://localhost:7268/',
         secure: false,
       },
     },
