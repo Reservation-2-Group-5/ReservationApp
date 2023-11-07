@@ -1,6 +1,6 @@
 <template>
   <div class="flex align-items-center gap-2">
-    <Avatar :image="image" size="small" class="avatar" shape="circle" />
+    <Avatar v-if="image" :image="image" size="small" class="avatar" shape="circle" />
     <div><span>{{ name }}</span> <span v-if="netId" class="netId">({{ netId }})</span></div>
   </div>
 </template>
@@ -15,7 +15,8 @@ defineProps({
   },
   image: {
     type: String,
-    required: true,
+    required: false,
+    default: null,
   },
   netId: {
     type: String,

@@ -59,7 +59,7 @@ const formatRoomData = (data) => {
   return formattedData;
 };
 
-const formatReservationData = (data) => {
+const formatDeviceReservationData = (data) => {
   const formattedData = [];
   for (const res of data) {
     const newRes = {};
@@ -82,6 +82,31 @@ const formatReservationData = (data) => {
     newRes.reqNetId = res.NetID;
     newRes.requestedOnDate = fixDate(res.Request_Date);
     newRes.requestedStartDate = fixDate(res.Start_Date);
+
+    formattedData.push(newRes);
+  }
+  return formattedData;
+};
+
+const formatRoomReservationData = (data) => {
+  const formattedData = [];
+  for (const res of data) {
+    const newRes = {};
+
+    newRes.id = res.id;
+    newRes.building = res.Building;
+    newRes.room = res.Room;
+    newRes.date = fixDate(res.Date);
+    newRes.time = res.Time;
+    newRes.available = (res.Available) ? 'available' : 'unavailable';
+    newRes.reservedBy = res.Reserved_Name;
+    newRes.reservedByNetId = res.Reserved_NetID;
+    newRes.maxOccupancy = res.Max_Occupancy;
+    newRes.type = (res.Is_Office) ? 'Office' : 'Conference';
+
+    newRes.requestedBy = res.Name;
+    newRes.reqNetId = res.NetID;
+    newRes.requestedOnDate = fixDate(res.Request_Date);
 
     formattedData.push(newRes);
   }
@@ -164,7 +189,7 @@ export const useDeviceReservationStore = defineStore('deviceReservation', () => 
   const deviceReservations = ref([]);
 
   const setReservations = (newReservations) => {
-    deviceReservations.value = formatReservationData(newReservations);
+    deviceReservations.value = formatDeviceReservationData(newReservations);
     let id = 0;
 
     const requestsExist = deviceReservations.value.filter((res) => !!res.requestedBy);
@@ -291,6 +316,98 @@ export const useRoomStore = defineStore('rooms', () => {
     rooms,
     setRooms,
     fetchRooms,
+    fetchAll,
+    getAll,
+  };
+});
+
+export const useRoomReservationStore = defineStore('roomReservation', () => {
+  const roomReservations = ref([]);
+
+  const setReservations = (newReservations) => {
+    roomReservations.value = formatRoomReservationData(newReservations);
+    let id = 0;
+
+    const requestsExist = roomReservations.value.filter((res) => !!res.NetID);
+    if (requestsExist.length) return; // don't add fake data if real data exists
+
+    for (const room of roomReservations.value) {
+      // Add reservation data to devices - simulate db JOIN query
+      room.id = id;
+      id += 1;
+      // random requester
+      room.requestedBy = `${
+        ['John', 'Jane', 'Joe', 'Jill', 'Jack'][Math.floor(Math.random() * 5)]
+      } ${
+        ['Smith', 'Doe', 'Johnson', 'Williams', 'Brown'][Math.floor(Math.random() * 5)]
+      }`;
+      const firstInitial = room.requestedBy[0].toLowerCase();
+      const lastName = room.requestedBy.split(' ')[1].toLowerCase();
+      room.reqNetId = `${firstInitial}${lastName}`;
+      // random date between now and 2 weeks from now
+      room.requestedOnDate = new Date(Date.now() + Math.floor(Math.random() * 12096e5));
+    }
+  };
+
+  const fetchReservations = async () => {
+    // const location = (isDev) ? 'realInventoryTestData.json' : 'db';
+    // const location = 'api/v1/device-res';
+    const roomResLocation = `${API}/room-res`;
+    const testDataLocation = 'realRoomTestData.json';
+    if (isDev) {
+      // simulate a fetch delay
+      await sleep(1000);
+    }
+    try {
+      // Check if /api is accessible
+      const useApi = await apiAccessible();
+      const selectedLocation = (useApi) ? roomResLocation : testDataLocation;
+
+      // Fetch room reservations
+      const response = await fetch(selectedLocation);
+      const json = await response.json();
+
+      setReservations(json);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const setRequest = (id, to) => {
+    for (const reservation of roomReservations.value) {
+      if (reservation.id === id) {
+        reservation.approved = to;
+        // remove the request from the list
+        roomReservations.value = roomReservations.value.filter(
+          (res) => res.building !== reservation.building
+          || res.room !== reservation.room
+          || res.date !== reservation.date
+          || res.time !== reservation.time,
+        );
+      }
+    }
+  };
+
+  const approveRequest = (id) => {
+    setRequest(id, true);
+  };
+
+  const denyRequest = (id) => {
+    setRequest(id, false);
+  };
+
+  const fetchAll = async () => {
+    await fetchReservations();
+  };
+
+  const getAll = computed(() => roomReservations.value);
+
+  return {
+    roomReservations,
+    setReservations,
+    fetchReservations,
+    approveRequest,
+    denyRequest,
     fetchAll,
     getAll,
   };
