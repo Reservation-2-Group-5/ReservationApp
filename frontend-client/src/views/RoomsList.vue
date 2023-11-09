@@ -139,7 +139,6 @@ function disallowMinutes(date) {
 }
 
 function setEvents() {
-  // console.log(info);
   events.value = [];
   if (!selectedRoom.value) return;
   const tempEvents = [];

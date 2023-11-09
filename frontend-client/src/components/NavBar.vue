@@ -9,7 +9,7 @@
       }"
       ref="navbar">
       <template #start>
-        <img alt="logo" src="https://primefaces.org/cdn/primevue/images/logo.svg" height="40" class="mr-2 logo" />
+        <img alt="logo" src="logo.svg" height="40" class="mr-2 logo" />
       </template>
       <template
         #item="{
