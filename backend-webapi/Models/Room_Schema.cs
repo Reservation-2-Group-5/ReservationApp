@@ -1,21 +1,31 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace ReservationApp.Models
 {
-    public class Room_Schema
+    public class Room
     {
-        public int tag { get; set; }
-        public int Date { get; set; }
-        public int time { get; set; }
-        public Boolean isAvailable { get; set; }   
-        public string Reserved_name { get; set; }
-        public int Reserved_NetID { get; set; }
-        public int Max_occupancy { get; set; }
-        public Boolean isOffice { get; set; }
+        [Key]
+        public string Building { get; set; } // Assuming 'Building' is a part of the primary key
 
+        [Key]
+        public string RoomNumber { get; set; } // Assuming 'Room' is a part of the primary key and is named 'RoomNumber' to avoid confusion with the class name
+
+        [Required]
+        public DateTime Date { get; set; }
+
+        [Required]
+        public DateTime Time { get; set; } 
+
+        public bool Available { get; set; }
+
+        [StringLength(255)]
+        public string ReservedName { get; set; } // Assuming this is a nullable field
+
+        public long? ReservedNetID { get; set; }
+
+        public int MaxOccupancy { get; set; }
+        public bool IsOffice { get; set; }
     }
 }
 

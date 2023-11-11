@@ -1,17 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ReservationApp.Models
 {
-   public class Room_Res
+    public class RoomRes
     {
-        public int NetID { get; set; }
-        public int tag { get; set; }
-        public string Request_Date { get; set; }
-        public string Start_Date { get; set; }
-        public string End_Date { get; set;}
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public long NetID { get; set; }
+
+        [Required]
+        public long Building { get; set; } // Assuming this corresponds to a Building ID
+
+        [Required]
+        public long Room { get; set; } // Assuming this corresponds to a Room ID
+
+        [Required]
+        public DateTime RequestDate { get; set; }
+
+        [Required]
+        public DateTime StartDate { get; set; }
+
+        [Required]
+        public DateTime EndDate { get; set; }
     }
 }
-
