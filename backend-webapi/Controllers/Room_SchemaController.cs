@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ReservationApp.Models;
-// Include any other namespaces required for our DbContext or services
+using ReservationApp.Services;
+
 
 namespace Reservation.Controllers
 {
@@ -8,7 +9,7 @@ namespace Reservation.Controllers
     [ApiController]
     public class RoomResController : ControllerBase
     {
-        // Assuming we have a service or DbContext for handling database operations
+       
         private readonly IRoomResService _service;
 
         public RoomResController(IRoomResService service)

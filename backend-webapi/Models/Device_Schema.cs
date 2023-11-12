@@ -27,8 +27,6 @@ namespace Reservation.Models
         [StringLength(255)] // Adjust string length according to database constraints
         public string Location { get; set; }
 
-        // Include all other fields from your Device schema
-        // ...
 
         public bool Available { get; set; } // Assuming this is a boolean in your database
 
