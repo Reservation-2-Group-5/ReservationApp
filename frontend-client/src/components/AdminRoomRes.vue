@@ -147,7 +147,7 @@ function setEvents() {
 // approve the selected reservation request
 async function approveRequest() {
   try {
-    await roomReservationStore.approveRequest(selectedReservation.value.id);
+    await roomReservationStore.approveRequest(selectedReservation.value);
     toast.add({
       severity: 'success',
       summary: 'Success',
@@ -170,7 +170,7 @@ async function approveRequest() {
 // deny the selected reservation request
 async function denyRequest() {
   try {
-    await roomReservationStore.denyRequest(selectedReservation.value.id);
+    await roomReservationStore.denyRequest(selectedReservation.value);
     toast.add({
       severity: 'success',
       summary: 'Success',

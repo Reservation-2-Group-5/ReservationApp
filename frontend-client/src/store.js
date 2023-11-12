@@ -1,7 +1,5 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { isDev } from '@/utils/env';
-import sleep from '@/utils/sleep';
 
 const API = 'api/v1';
 
@@ -323,21 +321,13 @@ export const useRoomStore = defineStore('rooms', () => {
   };
 
   const fetchRooms = async () => {
-    // const location = (isDev) ? 'realRoomTestData.json' : 'db';
-    // const location = 'api/v1/rooms';
-    const deviceResLocation = `${API}/rooms`;
-    const testDataLocation = 'realRoomTestData.json';
-    if (isDev) {
-      // simulate a fetch delay
-      await sleep(1000);
-    }
     try {
       // Check if /api is accessible
       const useApi = await apiAccessible();
-      const selectedLocation = (useApi) ? deviceResLocation : testDataLocation;
+      if (!useApi) return; // don't fetch if api is not accessible
 
       // Fetch device reservations
-      const response = await fetch(selectedLocation);
+      const response = await fetch(`${API}/rooms`);
       const json = await response.json();
       setRooms(json);
     } catch (err) {
@@ -365,45 +355,16 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
 
   const setReservations = (newReservations) => {
     roomReservations.value = formatRoomReservationData(newReservations);
-    let id = 0;
-
-    const requestsExist = roomReservations.value.filter((res) => !!res.NetID);
-    if (requestsExist.length) return; // don't add fake data if real data exists
-
-    for (const room of roomReservations.value) {
-      // Add reservation data to devices - simulate db JOIN query
-      room.id = id;
-      id += 1;
-      // random requester
-      room.requestedBy = `${
-        ['John', 'Jane', 'Joe', 'Jill', 'Jack'][Math.floor(Math.random() * 5)]
-      } ${
-        ['Smith', 'Doe', 'Johnson', 'Williams', 'Brown'][Math.floor(Math.random() * 5)]
-      }`;
-      const firstInitial = room.requestedBy[0].toLowerCase();
-      const lastName = room.requestedBy.split(' ')[1].toLowerCase();
-      room.reqNetId = `${firstInitial}${lastName}`;
-      // random date between now and 2 weeks from now
-      room.requestedOnDate = new Date(Date.now() + Math.floor(Math.random() * 12096e5));
-    }
   };
 
   const fetchReservations = async () => {
-    // const location = (isDev) ? 'realInventoryTestData.json' : 'db';
-    // const location = 'api/v1/device-res';
-    const roomResLocation = `${API}/room-res`;
-    const testDataLocation = 'realRoomTestData.json';
-    if (isDev) {
-      // simulate a fetch delay
-      await sleep(1000);
-    }
     try {
       // Check if /api is accessible
       const useApi = await apiAccessible();
-      const selectedLocation = (useApi) ? roomResLocation : testDataLocation;
+      if (!useApi) return; // don't fetch if api is not accessible
 
       // Fetch room reservations
-      const response = await fetch(selectedLocation);
+      const response = await fetch(`${API}/room-res`);
       const json = await response.json();
 
       setReservations(json);
@@ -412,27 +373,27 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
     }
   };
 
-  const setRequest = (id, to) => {
+  const editRequest = (res, to) => {
     for (const reservation of roomReservations.value) {
-      if (reservation.id === id) {
+      if (reservation.id === res.id) {
         reservation.approved = to;
-        // remove the request from the list
+        // remove the request from the list locally
         roomReservations.value = roomReservations.value.filter(
-          (res) => res.building !== reservation.building
-          || res.room !== reservation.room
-          || res.date !== reservation.date
-          || res.time !== reservation.time,
+          (fRes) => fRes.building !== reservation.building
+          || fRes.room !== reservation.room
+          || fRes.date !== reservation.date
+          || fRes.time !== reservation.time,
         );
       }
     }
   };
 
-  const approveRequest = (id) => {
-    setRequest(id, true);
+  const approveRequest = (res) => {
+    editRequest(res, true);
   };
 
-  const denyRequest = (id) => {
-    setRequest(id, false);
+  const denyRequest = (res) => {
+    editRequest(res, false);
   };
 
   const fetchAll = async () => {

@@ -101,14 +101,16 @@ import Divider from 'primevue/divider';
 import Calendar from 'primevue/calendar';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
-import { useRoomStore } from '@/store';
+import { useRoomStore, useUserStore } from '@/store';
 import { storeToRefs } from 'pinia';
 
 const unavailableColor = '#66000088';
+const pendingColor = '#885000';
 
 // get the room store
 const roomStore = useRoomStore();
 const { rooms } = storeToRefs(roomStore);
+const userStore = useUserStore();
 
 // initialize the toast notifications
 const toast = useToast();
@@ -164,12 +166,13 @@ function setEvents() {
     const end = new Date(start);
     end.setHours(time + 1);
 
+    const isPending = !(r.reservedBy && r.reservedByNetId);
     tempEvents.push({
       // https://fullcalendar.io/docs/event-object
-      title: `${r.reservedBy} (${r.reservedByNetId})`, // `${building} - ${room}`,
+      title: (isPending) ? 'Pending approval' : `${r.reservedBy} (${r.reservedByNetId})`,
       start,
       end,
-      color: unavailableColor,
+      color: (isPending) ? pendingColor : unavailableColor,
       textColor: '#eee',
       display: 'background',
     });
@@ -275,10 +278,11 @@ function handleSubmit() {
 
     tempEvents.push({
       // TODO: add logged in user's name and netid
-      title: 'You',
+      title: `Pending approval - ${userStore.user.netId}`,
       start: startDate,
       end: endDate,
-      color: unavailableColor,
+      // dark orange
+      color: pendingColor,
       textColor: '#fff',
       display: 'background',
     });
@@ -306,6 +310,14 @@ function submitReservation(closeFn) {
 
 function handleSelect(selectionInfo) {
   if (selectionInfo.startStr === selectedStartDate.value) {
+    clearSelection();
+  } else if (!userStore.isLoggedIn) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'You must be logged in to reserve a room.',
+      life: toastDuration,
+    });
     clearSelection();
   } else {
     selectedStartDate.value = selectionInfo.start;
