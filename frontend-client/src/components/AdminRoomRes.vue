@@ -10,16 +10,18 @@
   </div>
   <Dialog v-model:visible="dialogVisible" modal header="Reservation Request Details" style="min-width: 30rem">
     <div class="dialog-content">
-      <p>Building: {{ selectedReservation.building }}</p>
-      <p>Room: {{ selectedReservation.room }}</p>
+      <p>Building: {{ selectedReservation[0].building }}</p>
+      <p>Room: {{ selectedReservation[0].room }}</p>
       <p class="req-by">Requested By:
         <ProfileName
-          :name="selectedReservation.requestedBy"
-          :netId="selectedReservation.reqNetId" />
+          :name="selectedReservation[0].requestedBy"
+          :netId="selectedReservation[0].reqNetId" />
       </p>
-      <p>Date: {{ formatDate(selectedReservation.date) }}</p>
+      <p>Date: {{ formatDate(selectedReservation[0].date) }}</p>
       <p>Time:
-        {{ formatTime(selectedReservation.time) }} - {{ formatTime(selectedReservation.time + 1) }}
+        {{ formatTime(selectedReservation[0].time) }}
+        -
+        {{ formatTime(selectedReservation[selectedReservation.length - 1].time + 1) }}
       </p>
       <div class="dialog-buttons">
         <Button
@@ -141,7 +143,88 @@ function setEvents() {
       },
     });
   });
-  events.value = tempEvents;
+
+  // find tempEvents that are sequential by the same person and combine them into one event
+
+  // sort by start time
+  tempEvents.sort((a, b) => {
+    if (a.extendedProps.reservation.building !== b.extendedProps.reservation.building) {
+      return a.extendedProps.reservation.building
+        .localeCompare(b.extendedProps.reservation.building);
+    }
+
+    if (a.extendedProps.reservation.room !== b.extendedProps.reservation.room) {
+      return a.extendedProps.reservation.room
+        .localeCompare(b.extendedProps.reservation.room);
+    }
+
+    // compare by date (ignoring time)
+    const aDate = new Date(a.start).setHours(0, 0, 0, 0);
+    const bDate = new Date(b.start).setHours(0, 0, 0, 0);
+    if (aDate !== bDate) {
+      return aDate - bDate;
+    }
+
+    // finally compare by start time
+    return a.start.getTime() - b.start.getTime();
+  });
+
+  // array to hold the final events
+  const finalEvents = [];
+
+  // find chain of sequential events for the same person in the same building and room
+  let sequentialEvents = [tempEvents[0]];
+
+  for (let i = 0; i < tempEvents.length - 1; i += 1) {
+    const currentEnd = new Date(tempEvents[i].end);
+    const nextStart = new Date(tempEvents[i + 1].start);
+
+    const currentReservation = tempEvents[i].extendedProps.reservation;
+    const nextReservation = tempEvents[i + 1].extendedProps.reservation;
+
+    // if the end time of the current event is the same as the start time of the next event
+    // and the reqNetId, building, and room are the same for both events
+    if (
+      currentEnd.getTime() === nextStart.getTime()
+      && currentReservation.reqNetId === nextReservation.reqNetId
+      && currentReservation.building === nextReservation.building
+      && currentReservation.room === nextReservation.room
+    ) {
+      sequentialEvents.push(tempEvents[i + 1]);
+    } else {
+      // create a new event with the start time of the first event
+      // and the end time of the last event in the sequence
+      const newEvent = {
+        ...sequentialEvents[0],
+        end: sequentialEvents[sequentialEvents.length - 1].end,
+        extendedProps: {
+          ...sequentialEvents[0].extendedProps,
+          reservations: sequentialEvents.map((event) => event.extendedProps.reservation),
+        },
+      };
+
+      finalEvents.push(newEvent);
+
+      // reset the sequentialEvents array for the next chain
+      sequentialEvents = [tempEvents[i + 1]];
+    }
+  }
+
+  // handle the last chain of sequential events
+  if (sequentialEvents.length > 0) {
+    const newEvent = {
+      ...sequentialEvents[0],
+      end: sequentialEvents[sequentialEvents.length - 1].end,
+      extendedProps: {
+        ...sequentialEvents[0].extendedProps,
+        reservations: sequentialEvents.map((event) => event.extendedProps.reservation),
+      },
+    };
+
+    finalEvents.push(newEvent);
+  }
+
+  events.value = finalEvents;
 }
 
 // approve the selected reservation request
@@ -154,7 +237,6 @@ async function approveRequest() {
       detail: 'Reservation request approved',
       life: toastDuration,
     });
-    dialogVisible.value = false;
     // await roomReservationStore.fetchAll();
     setEvents();
   } catch (err) {
@@ -165,6 +247,7 @@ async function approveRequest() {
       life: toastDuration,
     });
   }
+  dialogVisible.value = false;
 }
 
 // deny the selected reservation request
@@ -210,7 +293,8 @@ const calendarOptions = reactive({
   },
   eventClick: (eventClickInfo) => {
     // open dialog to approve or deny reservation request
-    selectedReservation.value = eventClickInfo.event.extendedProps.reservation;
+    const { reservations, reservation } = eventClickInfo.event.extendedProps;
+    selectedReservation.value = reservations || reservation;
     dialogVisible.value = true;
   },
   events,

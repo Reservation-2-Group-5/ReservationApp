@@ -373,9 +373,41 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
     }
   };
 
-  const editRequest = (res, to) => {
+  // update the request in the db
+  const editRequest = async (resArr, to) => {
+    const body = [];
+    for (const res of resArr) {
+      body.push({
+        Building: res.building,
+        Room: res.room,
+        Date: res.date.getTime(),
+        Time: res.time,
+        NetID: res.reqNetId,
+        Name: res.requestedBy,
+        status: (to) ? 'approved' : 'denied',
+      });
+    }
+    const response = await fetch(`${API}/room-res/${resArr[0].id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const json = await response.json();
+    console.log(json);
+    // match all error codes
+    if (response.status === 500
+      || response.status === 400
+      || response.status === 404) {
+      throw new Error(json.message);
+    }
+  };
+
+  const setRequest = async (resArr, to) => {
+    const ids = resArr.map((obj) => obj.id);
     for (const reservation of roomReservations.value) {
-      if (reservation.id === res.id) {
+      if (ids.includes(reservation.id)) {
         reservation.approved = to;
         // remove the request from the list locally
         roomReservations.value = roomReservations.value.filter(
@@ -386,6 +418,7 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
         );
       }
     }
+    await editRequest(resArr, to);
   };
 
   const createReservation = async (resArr) => {
@@ -413,13 +446,9 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
     }
   };
 
-  const approveRequest = (res) => {
-    editRequest(res, true);
-  };
+  const approveRequest = (resArr) => setRequest(resArr, true);
 
-  const denyRequest = (res) => {
-    editRequest(res, false);
-  };
+  const denyRequest = (resArr) => setRequest(resArr, false);
 
   const fetchAll = async () => {
     await fetchReservations();
