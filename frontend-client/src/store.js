@@ -251,7 +251,7 @@ export const useDeviceReservationStore = defineStore('deviceReservation', () => 
     });
     const json = await response.json();
     console.log(json);
-    if (response.status !== 200) {
+    if (response.status === 500 || response.status === 400) {
       throw new Error(json.message);
     }
   };
@@ -286,7 +286,7 @@ export const useDeviceReservationStore = defineStore('deviceReservation', () => 
     });
     const json = await response.json();
     console.log(json);
-    if (response.status !== 200) {
+    if (response.status === 500 || response.status === 400) {
       throw new Error('Error creating reservation');
     }
   };
@@ -388,6 +388,31 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
     }
   };
 
+  const createReservation = async (resArr) => {
+    const body = [];
+    for (const res of resArr) {
+      body.push({
+        Building: res.building,
+        Room: res.room,
+        Date: res.date.getTime(),
+        Time: res.time,
+        NetID: res.reqNetId,
+      });
+    }
+    const response = await fetch(`${API}/room-res`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const json = await response.json();
+    console.log(json);
+    if (response.status === 500 || response.status === 400) {
+      throw new Error('Error creating reservation');
+    }
+  };
+
   const approveRequest = (res) => {
     editRequest(res, true);
   };
@@ -410,5 +435,6 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
     denyRequest,
     fetchAll,
     getAll,
+    createReservation,
   };
 });
