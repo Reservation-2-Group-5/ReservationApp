@@ -9,7 +9,7 @@
       }"
       ref="navbar">
       <template #start>
-        <img alt="logo" src="https://primefaces.org/cdn/primevue/images/logo.svg" height="40" class="mr-2 logo" />
+        <img alt="logo" src="logo.svg" height="40" class="mr-2 logo" />
       </template>
       <template
         #item="{
@@ -21,11 +21,11 @@
         }">
         <router-link v-if="item.route" :to="item.route" class="p-menuitem-link" @mouseup="unsetClick">
           <span v-if="item.icon" v-bind="props.icon" />
-          <span v-bind="props.label">{{ label }}</span>
+          <span>{{ getLabel(label) }}</span>
         </router-link>
         <a v-else :href="item.url" :target="item.target" v-bind="props.action">
           <span v-if="item.icon" v-bind="props.icon" />
-          <span v-bind="props.label">{{ label }}</span>
+          <span>{{ getLabel(label) }}</span>
           <span :class="[hasSubmenu && (root ? 'pi pi-fw pi-angle-down' : 'pi pi-fw pi-angle-right')]" v-bind="props.submenuicon" /> -->
         </a>
       </template>
@@ -47,16 +47,23 @@ const { isAdmin, isLoggedIn } = storeToRefs(userStore);
 const items = ref(navbarItems);
 const navbar = ref(null);
 
+function getLabel(label) {
+  if (label === 'Logout' && isLoggedIn.value) {
+    return `Logout (${userStore.user.netId})`;
+  }
+  return label;
+}
+
 function assignClasses(props, context) {
   const classList = [];
-  const { label } = context.item.item;
+  const { label, auth } = context.item.item;
   if (label === 'Login' || label === 'Admin'
     || (label === 'Logout' && isLoggedIn.value && !isAdmin.value)) {
     classList.push('right-aligned');
   }
-  if ((label === 'Admin' && !isAdmin.value)
-    || (label === 'Logout' && !isLoggedIn.value)
-    || (label === 'Login' && isLoggedIn.value)) {
+  if ((auth === 'admin' && !isAdmin.value)
+    || (auth === 'user' && !isLoggedIn.value)
+    || (auth === 'guest' && isLoggedIn.value)) {
     classList.push('hidden-menuitem');
   }
   return classList.join(' ');

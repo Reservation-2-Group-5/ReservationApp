@@ -144,7 +144,7 @@
             <h1>{{ selectedInventory[0].name }}</h1>
             <div class="dialog-details-inner">
               <p><span class="bold">Category:</span> {{ selectedInventory[0].category }}</p>
-              <p><span class="bold">Assigned To:</span> {{ `${selectedInventory[0].assignedTo} (${selectedInventory[0].netId})` }}</p>
+              <p><span class="bold">Assigned To:</span> {{ formatAssignedTo(selectedInventory[0].assignedTo, selectedInventory[0].netId) }}</p>
               <p><span class="bold">Location:</span> {{ selectedInventory[0].location }}</p>
               <p><span class="bold">Funding Source:</span> {{ selectedInventory[0].fundingSource }}</p>
               <p><span class="bold">Department Ownership:</span> {{ selectedInventory[0].department }}</p>
@@ -187,7 +187,7 @@ import { useToast } from 'primevue/usetoast';
 import { storeToRefs } from 'pinia';
 import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
 import ProfileName from '@/components/inventory-list/ProfileName.vue';
-import { useInventoryStore } from '@/store';
+import { useInventoryStore, useDeviceReservationStore, useUserStore } from '@/store';
 import {
   formatDate,
   initFilters,
@@ -198,9 +198,11 @@ import {
 
 const placeholderAvatar = 'https://images.placeholders.dev/?width=32&height=32';
 
-// get the inventory store
+// get the stores
 const inventoryStore = useInventoryStore();
 const { inventory } = storeToRefs(inventoryStore);
+const deviceReservationStore = useDeviceReservationStore();
+const userStore = useUserStore();
 
 // initialize the toast notifications
 const toast = useToast();
@@ -311,6 +313,16 @@ function submitSelection() {
     return;
   }
 
+  if (!userStore.isLoggedIn) {
+    toast.add({
+      severity: 'error',
+      summary: 'Not logged in',
+      detail: 'Please log in to submit a reservation',
+      life: toastDuration,
+    });
+    return;
+  }
+
   console.log('selectedInventory', selectedInventory.value[0]);
   // open the dialog to set the reservation dates
   dialogVisible.value = true;
@@ -324,8 +336,13 @@ function closeDialog(closeFn) {
   closeFn();
 }
 
+function formatAssignedTo(name, netId) {
+  const nameStr = name ?? 'None';
+  return (netId) ? `${nameStr} (${netId})` : nameStr;
+}
+
 // submit the reservation to the server
-function submitReservation(closeFn) {
+async function submitReservation(closeFn) {
   if (!reservationStartDate.value || !reservationEndDate.value) {
     toast.add({
       severity: 'error',
@@ -344,16 +361,41 @@ function submitReservation(closeFn) {
     });
     return;
   }
+  if (!userStore.isLoggedIn) {
+    toast.add({
+      severity: 'error',
+      summary: 'Not logged in',
+      detail: 'Please log in to submit a reservation',
+      life: toastDuration,
+    });
+    closeDialog(closeFn);
+    return;
+  }
 
-  // TODO: submit reservation to server, mark item as unavailable
-  toast.add({
-    severity: 'success',
-    summary: 'Reservation submitted',
-    detail: `Your ${selectedInventory.value[0].name} reservation has been submitted for ${formatDate(reservationStartDate.value)} to ${formatDate(reservationEndDate.value)}}`,
-    life: toastDuration,
-  });
-  selectedInventory.value[0].available = 'unavailable';
-  selectedInventory.value = [];
+  try {
+    await deviceReservationStore.createReservation({
+      tag: selectedInventory.value[0].tag,
+      reqNetId: userStore.user.netId,
+      requestedStartDate: reservationStartDate.value,
+      requestedEndDate: reservationEndDate.value,
+    });
+    toast.add({
+      severity: 'success',
+      summary: 'Reservation submitted',
+      detail: `Your ${selectedInventory.value[0].name} reservation has been submitted for ${formatDate(reservationStartDate.value)} to ${formatDate(reservationEndDate.value)}}`,
+      life: toastDuration,
+    });
+    selectedInventory.value[0].available = 'unavailable';
+    selectedInventory.value = [];
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error submitting reservation',
+      detail: err.message,
+      life: toastDuration,
+    });
+    console.error(err);
+  }
   closeDialog(closeFn);
 }
 

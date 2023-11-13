@@ -277,24 +277,42 @@ function search(event) {
   searchItems(event, itemNames, filteredItems);
 }
 
-function approveRequest(reservation) {
-  deviceReservationStore.approveRequest(reservation.id);
-  toast.add({
-    severity: 'success',
-    summary: 'Reservation Approved',
-    detail: `${reservation.requestedBy}'s ${reservation.name} request has been approved.`,
-    life: toastDuration,
-  });
+async function approveRequest(reservation) {
+  try {
+    await deviceReservationStore.approveRequest(reservation);
+    toast.add({
+      severity: 'success',
+      summary: 'Reservation Approved',
+      detail: `${reservation.requestedBy}'s ${reservation.name} request has been approved.`,
+      life: toastDuration,
+    });
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: `There was an error approving ${reservation.requestedBy}'s ${reservation.name} request.`,
+      life: toastDuration,
+    });
+  }
 }
 
-function denyRequest(reservation) {
-  deviceReservationStore.denyRequest(reservation.id);
-  toast.add({
-    severity: 'warn',
-    summary: 'Reservation Denied',
-    detail: `${reservation.requestedBy}'s ${reservation.name} request has been denied.`,
-    life: toastDuration,
-  });
+async function denyRequest(reservation) {
+  try {
+    await deviceReservationStore.denyRequest(reservation);
+    toast.add({
+      severity: 'warn',
+      summary: 'Reservation Denied',
+      detail: `${reservation.requestedBy}'s ${reservation.name} request has been denied.`,
+      life: toastDuration,
+    });
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: `There was an error denying ${reservation.requestedBy}'s ${reservation.name} request.`,
+      life: toastDuration,
+    });
+  }
 }
 
 async function requestData() {

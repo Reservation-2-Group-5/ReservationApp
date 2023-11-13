@@ -1,7 +1,5 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { isDev } from '@/utils/env';
-import sleep from '@/utils/sleep';
 
 const API = 'api/v1';
 
@@ -16,6 +14,22 @@ const fixDate = (date) => {
     return new Date(date);
   }
   return date;
+};
+
+const formatUserData = (data) => {
+  const formattedData = [];
+  for (const user of data) {
+    const newUser = {};
+    newUser.netId = user.NetID;
+    newUser.name = user.Name;
+    newUser.email = user.Email;
+    newUser.isFaculty = user.Is_Faculty;
+    newUser.isStudent = user.Is_Student;
+    newUser.isAdmin = user.Is_Admin;
+
+    formattedData.push(newUser);
+  }
+  return formattedData;
 };
 
 const formatInventoryData = (data) => {
@@ -77,6 +91,7 @@ const formatDeviceReservationData = (data) => {
     newRes.warrantyExpiration = fixDate(res.Warranty_EXP);
     newRes.available = (res.Available) ? 'available' : 'unavailable';
 
+    newRes.id = res.id;
     newRes.requestedEndDate = fixDate(res.End_Date);
     newRes.requestedBy = res.Name;
     newRes.reqNetId = res.NetID;
@@ -104,6 +119,7 @@ const formatRoomReservationData = (data) => {
     newRes.maxOccupancy = res.Max_Occupancy;
     newRes.type = (res.Is_Office) ? 'Office' : 'Conference';
 
+    newRes.id = res.id;
     newRes.requestedBy = res.Name;
     newRes.reqNetId = res.NetID;
     newRes.requestedOnDate = fixDate(res.Request_Date);
@@ -114,20 +130,48 @@ const formatRoomReservationData = (data) => {
 };
 
 export const useUserStore = defineStore('user', () => {
+  const users = ref([]);
   const user = ref(null);
 
   const setUser = (newUser) => {
     user.value = newUser;
   };
 
+  const setUsers = (newUsers) => {
+    users.value = formatUserData(newUsers);
+  };
+
   const isLoggedIn = computed(() => !!user.value);
-  const isAdmin = computed(() => user.value?.role === 'admin');
+  const isAdmin = computed(() => user.value?.isAdmin);
+
+  async function fetchUsers() {
+    try {
+      const response = await fetch(`${API}/users`);
+      const json = await response.json();
+      setUsers(json);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // TODO: implement once we have netid system
+  async function login() {
+    if (user.value) return; // don't login if already logged in
+    if (!users.value.length) {
+      await fetchUsers();
+    }
+    // FIXME: pick a random user with admin role for now
+    const adminUsers = users.value.filter((u) => u.isAdmin);
+    const randomAdmin = adminUsers[Math.floor(Math.random() * adminUsers.length)];
+    setUser(randomAdmin);
+  }
 
   return {
     user,
     setUser,
     isLoggedIn,
     isAdmin,
+    login,
   };
 });
 
@@ -139,33 +183,17 @@ export const useInventoryStore = defineStore('inventory', () => {
   };
 
   const fetchInventory = async () => {
-    // const location = (isDev) ? 'realInventoryTestData.json' : 'db';
-    // const location = 'api/v1/devices';
-    const deviceResLocation = `${API}/devices`;
-    const testDataLocation = 'realInventoryTestData.json';
-    if (isDev) {
-      // simulate a fetch delay
-      await sleep(1000);
-    }
     try {
       // Check if /api is accessible
       const useApi = await apiAccessible();
-      const selectedLocation = (useApi) ? deviceResLocation : testDataLocation;
+      if (!useApi) return; // don't fetch if api is not accessible
 
       // Fetch device reservations
-      const response = await fetch(selectedLocation);
+      const response = await fetch(`${API}/devices`);
       const json = await response.json();
       setInventory(json);
     } catch (err) {
       console.error(err);
-    }
-  };
-
-  const setItemImg = (id, img) => {
-    for (const item of inventory.value) {
-      if (item.id === id) {
-        item.img = img;
-      }
     }
   };
 
@@ -178,7 +206,6 @@ export const useInventoryStore = defineStore('inventory', () => {
   return {
     inventory,
     setInventory,
-    setItemImg,
     fetchInventory,
     fetchAll,
     getAll,
@@ -190,47 +217,16 @@ export const useDeviceReservationStore = defineStore('deviceReservation', () => 
 
   const setReservations = (newReservations) => {
     deviceReservations.value = formatDeviceReservationData(newReservations);
-    let id = 0;
-
-    const requestsExist = deviceReservations.value.filter((res) => !!res.requestedBy);
-    if (requestsExist.length) return; // don't add fake data if real data exists
-
-    for (const item of deviceReservations.value) {
-      // Add reservation data to devices - simulate db JOIN query
-      item.id = id;
-      id += 1;
-      // random requester
-      item.requestedBy = `${
-        ['John', 'Jane', 'Joe', 'Jill', 'Jack'][Math.floor(Math.random() * 5)]
-      } ${
-        ['Smith', 'Doe', 'Johnson', 'Williams', 'Brown'][Math.floor(Math.random() * 5)]
-      }`;
-      const firstInitial = item.requestedBy[0].toLowerCase();
-      const lastName = item.requestedBy.split(' ')[1].toLowerCase();
-      item.reqNetId = `${firstInitial}${lastName}`;
-      // random date between now and 2 weeks from now
-      item.requestedOnDate = new Date(Date.now() + Math.floor(Math.random() * 12096e5));
-      item.requestedStartDate = new Date(item.requestedOnDate);
-      item.requestedEndDate = new Date(item.requestedOnDate.getTime() + 2592e6);
-    }
   };
 
   const fetchReservations = async () => {
-    // const location = (isDev) ? 'realInventoryTestData.json' : 'db';
-    // const location = 'api/v1/device-res';
-    const deviceResLocation = `${API}/device-res`;
-    const testDataLocation = 'realInventoryTestData.json';
-    if (isDev) {
-      // simulate a fetch delay
-      await sleep(1000);
-    }
     try {
       // Check if /api is accessible
       const useApi = await apiAccessible();
-      const selectedLocation = (useApi) ? deviceResLocation : testDataLocation;
+      if (!useApi) return; // don't fetch if api is not accessible
 
       // Fetch device reservations
-      const response = await fetch(selectedLocation);
+      const response = await fetch(`${API}/device-res`);
       const json = await response.json();
 
       setReservations(json);
@@ -239,25 +235,65 @@ export const useDeviceReservationStore = defineStore('deviceReservation', () => 
     }
   };
 
-  const setRequest = (id, to) => {
-    for (const reservation of deviceReservations.value) {
-      if (reservation.id === id) {
-        reservation.approved = to;
-        // remove the request from the list
-        deviceReservations.value = deviceReservations.value.filter(
-          (res) => res.tag !== reservation.tag,
-        );
-      }
+  // update the request in the db
+  const editRequest = async (res, to) => {
+    const body = {
+      status: (to) ? 'approved' : 'denied',
+      NetID: res.reqNetId,
+      Name: res.requestedBy,
+    };
+    const response = await fetch(`${API}/device-res/${res.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const json = await response.json();
+    console.log(json);
+    if (response.status === 500 || response.status === 400) {
+      throw new Error(json.message);
     }
   };
 
-  const approveRequest = (id) => {
-    setRequest(id, true);
+  // locally update the request
+  const setRequest = async (res, to) => {
+    for (const reservation of deviceReservations.value) {
+      if (reservation.id === res.id) {
+        reservation.approved = to;
+        // remove the request from the list locally
+        deviceReservations.value = deviceReservations.value.filter(
+          (fRes) => fRes.tag !== reservation.tag,
+        );
+      }
+    }
+    await editRequest(res, to);
   };
 
-  const denyRequest = (id) => {
-    setRequest(id, false);
+  const createReservation = async (res) => {
+    const body = {
+      Tag: res.tag,
+      NetID: res.reqNetId,
+      Start_Date: res.requestedStartDate,
+      End_Date: res.requestedEndDate,
+    };
+    const response = await fetch(`${API}/device-res`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const json = await response.json();
+    console.log(json);
+    if (response.status === 500 || response.status === 400) {
+      throw new Error('Error creating reservation');
+    }
   };
+
+  const approveRequest = (res) => setRequest(res, true);
+
+  const denyRequest = (res) => setRequest(res, false);
 
   const fetchAll = async () => {
     await fetchReservations();
@@ -273,6 +309,7 @@ export const useDeviceReservationStore = defineStore('deviceReservation', () => 
     denyRequest,
     fetchAll,
     getAll,
+    createReservation,
   };
 });
 
@@ -284,21 +321,13 @@ export const useRoomStore = defineStore('rooms', () => {
   };
 
   const fetchRooms = async () => {
-    // const location = (isDev) ? 'realRoomTestData.json' : 'db';
-    // const location = 'api/v1/rooms';
-    const deviceResLocation = `${API}/rooms`;
-    const testDataLocation = 'realRoomTestData.json';
-    if (isDev) {
-      // simulate a fetch delay
-      await sleep(1000);
-    }
     try {
       // Check if /api is accessible
       const useApi = await apiAccessible();
-      const selectedLocation = (useApi) ? deviceResLocation : testDataLocation;
+      if (!useApi) return; // don't fetch if api is not accessible
 
       // Fetch device reservations
-      const response = await fetch(selectedLocation);
+      const response = await fetch(`${API}/rooms`);
       const json = await response.json();
       setRooms(json);
     } catch (err) {
@@ -326,45 +355,16 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
 
   const setReservations = (newReservations) => {
     roomReservations.value = formatRoomReservationData(newReservations);
-    let id = 0;
-
-    const requestsExist = roomReservations.value.filter((res) => !!res.NetID);
-    if (requestsExist.length) return; // don't add fake data if real data exists
-
-    for (const room of roomReservations.value) {
-      // Add reservation data to devices - simulate db JOIN query
-      room.id = id;
-      id += 1;
-      // random requester
-      room.requestedBy = `${
-        ['John', 'Jane', 'Joe', 'Jill', 'Jack'][Math.floor(Math.random() * 5)]
-      } ${
-        ['Smith', 'Doe', 'Johnson', 'Williams', 'Brown'][Math.floor(Math.random() * 5)]
-      }`;
-      const firstInitial = room.requestedBy[0].toLowerCase();
-      const lastName = room.requestedBy.split(' ')[1].toLowerCase();
-      room.reqNetId = `${firstInitial}${lastName}`;
-      // random date between now and 2 weeks from now
-      room.requestedOnDate = new Date(Date.now() + Math.floor(Math.random() * 12096e5));
-    }
   };
 
   const fetchReservations = async () => {
-    // const location = (isDev) ? 'realInventoryTestData.json' : 'db';
-    // const location = 'api/v1/device-res';
-    const roomResLocation = `${API}/room-res`;
-    const testDataLocation = 'realRoomTestData.json';
-    if (isDev) {
-      // simulate a fetch delay
-      await sleep(1000);
-    }
     try {
       // Check if /api is accessible
       const useApi = await apiAccessible();
-      const selectedLocation = (useApi) ? roomResLocation : testDataLocation;
+      if (!useApi) return; // don't fetch if api is not accessible
 
       // Fetch room reservations
-      const response = await fetch(selectedLocation);
+      const response = await fetch(`${API}/room-res`);
       const json = await response.json();
 
       setReservations(json);
@@ -373,28 +373,82 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
     }
   };
 
-  const setRequest = (id, to) => {
-    for (const reservation of roomReservations.value) {
-      if (reservation.id === id) {
-        reservation.approved = to;
-        // remove the request from the list
-        roomReservations.value = roomReservations.value.filter(
-          (res) => res.building !== reservation.building
-          || res.room !== reservation.room
-          || res.date !== reservation.date
-          || res.time !== reservation.time,
-        );
-      }
+  // update the request in the db
+  const editRequest = async (resArr, to) => {
+    const body = [];
+    for (const res of resArr) {
+      body.push({
+        Building: res.building,
+        Room: res.room,
+        Date: res.date.getTime(),
+        Time: res.time,
+        NetID: res.reqNetId,
+        Name: res.requestedBy,
+        status: (to) ? 'approved' : 'denied',
+      });
+    }
+    const response = await fetch(`${API}/room-res/${resArr[0].id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const json = await response.json();
+    console.log(json);
+    // match all error codes
+    if (response.status === 500
+      || response.status === 400
+      || response.status === 404) {
+      throw new Error(json.message);
     }
   };
 
-  const approveRequest = (id) => {
-    setRequest(id, true);
+  const setRequest = async (resArr, to) => {
+    const ids = resArr.map((obj) => obj.id);
+    for (const reservation of roomReservations.value) {
+      if (ids.includes(reservation.id)) {
+        reservation.approved = to;
+        // remove the request from the list locally
+        roomReservations.value = roomReservations.value.filter(
+          (fRes) => fRes.building !== reservation.building
+          || fRes.room !== reservation.room
+          || fRes.date !== reservation.date
+          || fRes.time !== reservation.time,
+        );
+      }
+    }
+    await editRequest(resArr, to);
   };
 
-  const denyRequest = (id) => {
-    setRequest(id, false);
+  const createReservation = async (resArr) => {
+    const body = [];
+    for (const res of resArr) {
+      body.push({
+        Building: res.building,
+        Room: res.room,
+        Date: res.date.getTime(),
+        Time: res.time,
+        NetID: res.reqNetId,
+      });
+    }
+    const response = await fetch(`${API}/room-res`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const json = await response.json();
+    console.log(json);
+    if (response.status === 500 || response.status === 400) {
+      throw new Error('Error creating reservation');
+    }
   };
+
+  const approveRequest = (resArr) => setRequest(resArr, true);
+
+  const denyRequest = (resArr) => setRequest(resArr, false);
 
   const fetchAll = async () => {
     await fetchReservations();
@@ -410,5 +464,6 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
     denyRequest,
     fetchAll,
     getAll,
+    createReservation,
   };
 });

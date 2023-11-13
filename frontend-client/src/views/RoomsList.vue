@@ -101,14 +101,17 @@ import Divider from 'primevue/divider';
 import Calendar from 'primevue/calendar';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
-import { useRoomStore } from '@/store';
+import { useRoomStore, useUserStore, useRoomReservationStore } from '@/store';
 import { storeToRefs } from 'pinia';
 
 const unavailableColor = '#66000088';
+const pendingColor = '#885000';
 
 // get the room store
 const roomStore = useRoomStore();
 const { rooms } = storeToRefs(roomStore);
+const userStore = useUserStore();
+const roomReservationStore = useRoomReservationStore();
 
 // initialize the toast notifications
 const toast = useToast();
@@ -139,7 +142,6 @@ function disallowMinutes(date) {
 }
 
 function setEvents() {
-  // console.log(info);
   events.value = [];
   if (!selectedRoom.value) return;
   const tempEvents = [];
@@ -165,12 +167,13 @@ function setEvents() {
     const end = new Date(start);
     end.setHours(time + 1);
 
+    const isPending = !(r.reservedBy && r.reservedByNetId);
     tempEvents.push({
       // https://fullcalendar.io/docs/event-object
-      title: `${r.reservedBy} (${r.reservedByNetId})`, // `${building} - ${room}`,
+      title: (isPending) ? 'Pending approval' : `${r.reservedBy} (${r.reservedByNetId})`,
       start,
       end,
-      color: unavailableColor,
+      color: (isPending) ? pendingColor : unavailableColor,
       textColor: '#eee',
       display: 'background',
     });
@@ -200,7 +203,7 @@ function clearSelection() {
   selectedEndDate.value = null;
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   if (!selectedStartDate.value || !selectedEndDate.value) {
     toast.add({
       severity: 'error',
@@ -253,41 +256,58 @@ function handleSubmit() {
     return false;
   }
 
-  // TODO: submit reservation request to api backend here
+  const startTimeStr = selectedStartDate.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const endTimeStr = selectedEndDate.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
   console.log(roomEntries); // all the room entries that match the selected room and time blocks
+  // TODO: if there are no room entries, then the user is trying to request too far in advance
+  // the db hasn't seeded any room entries more than 30 days in advance
 
-  const startTime = selectedStartDate.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const endTime = selectedEndDate.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  toast.add({
-    severity: 'success',
-    summary: 'Submitted Reservation Request',
-    detail: `${building} - ${room} requested for ${start} from ${startTime} to ${endTime}.`,
-    life: toastDuration,
-  });
-
-  // add the events to the calendar
-  const tempEvents = [];
+  // add netid to room entries
   for (const entry of roomEntries) {
-    // use the date from the room entry
-    const startDate = new Date(entry.date);
-    startDate.setHours(entry.time, 0, 0, 0);
-    const endDate = new Date(entry.date);
-    endDate.setHours(entry.time + 1, 0, 0, 0);
-
-    tempEvents.push({
-      // TODO: add logged in user's name and netid
-      title: 'You',
-      start: startDate,
-      end: endDate,
-      color: unavailableColor,
-      textColor: '#fff',
-      display: 'background',
-    });
+    entry.reqNetId = userStore.user.netId;
   }
-  // add the events to the calendar
-  calendar.value.getApi().addEventSource(tempEvents);
+  try {
+    await roomReservationStore.createReservation(roomEntries);
 
-  return true;
+    // add the events to the calendar
+    const tempEvents = [];
+    for (const entry of roomEntries) {
+      // use the date from the room entry
+      const startDate = new Date(entry.date);
+      startDate.setHours(entry.time, 0, 0, 0);
+      const endDate = new Date(entry.date);
+      endDate.setHours(entry.time + 1, 0, 0, 0);
+
+      tempEvents.push({
+        title: `Pending approval - ${userStore.user.netId}`,
+        start: startDate,
+        end: endDate,
+        color: pendingColor,
+        textColor: '#fff',
+        display: 'background',
+      });
+    }
+    // add the events to the calendar
+    calendar.value.getApi().addEventSource(tempEvents);
+
+    toast.add({
+      severity: 'success',
+      summary: 'Submitted Reservation Request',
+      detail: `${building} - ${room} requested for ${start} from ${startTimeStr} to ${endTimeStr}.`,
+      life: toastDuration,
+    });
+    return true;
+  } catch (error) {
+    console.error(error);
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.message,
+      life: toastDuration,
+    });
+    return false;
+  }
 }
 
 // close the dialog box
@@ -307,6 +327,14 @@ function submitReservation(closeFn) {
 
 function handleSelect(selectionInfo) {
   if (selectionInfo.startStr === selectedStartDate.value) {
+    clearSelection();
+  } else if (!userStore.isLoggedIn) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'You must be logged in to reserve a room.',
+      life: toastDuration,
+    });
     clearSelection();
   } else {
     selectedStartDate.value = selectionInfo.start;
@@ -333,7 +361,8 @@ const calendarOptions = reactive({
   select: handleSelect,
   eventMouseEnter: (mouseEnterInfo) => {
     // set cursor to disabled if event is not available
-    if (mouseEnterInfo.event.backgroundColor === unavailableColor) {
+    const colorPattern = new RegExp(`(${unavailableColor}|${pendingColor})`);
+    if (mouseEnterInfo.event.backgroundColor.match(colorPattern)) {
       mouseEnterInfo.el.style.cursor = 'not-allowed';
     }
   },

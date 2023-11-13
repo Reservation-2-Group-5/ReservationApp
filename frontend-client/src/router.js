@@ -15,10 +15,16 @@ const routes = [{
   path: '/inventory',
   name: 'Inventory',
   component: InventoryList,
+  meta: {
+    requiresAuth: true,
+  },
 }, {
   path: '/rooms',
   name: 'Rooms',
   component: RoomsList,
+  meta: {
+    requiresAuth: true,
+  },
 }, {
   path: '/login',
   name: 'Login',

@@ -14,19 +14,14 @@ import { onMounted } from 'vue';
 import { useUserStore } from '@/store';
 import { useRouter } from 'vue-router';
 import Card from 'primevue/card';
-import sleep from '@/utils/sleep';
 
 const userStore = useUserStore();
 const router = useRouter();
 
 onMounted(async () => {
-  await sleep(1000);
   // TODO: Remove this once we have proper login
-  userStore.setUser({
-    id: 1,
-    name: 'John Doe',
-    role: 'admin',
-  });
+  await userStore.login();
+  console.log('Logged in:', userStore.user);
   const to = router.currentRoute.value.query?.redirect ?? null;
   if (to) {
     router.push(to);
