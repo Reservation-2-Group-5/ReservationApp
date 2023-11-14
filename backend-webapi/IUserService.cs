@@ -1,3 +1,4 @@
+using Reservation.Controllers;
 using ReservationApp.Models;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -12,8 +13,8 @@ namespace ReservationApp.Services
         Task<User> CreateUserAsync(User user);
         Task UpdateUserAsync(User user);
         Task DeleteUserAsync(long netId);
-        Task<User> GetUserByNetIDAsync(long netId);
-
+        Task<User> GetUserByNetIDAsync(long NetID);
+        Task<RoomResController> GetAsync(object NetID);
     }
 
     public class UserService : IUserService
@@ -40,6 +41,11 @@ namespace ReservationApp.Services
             return await _context.Users.ToListAsync();
         }
 
+        public Task GetAsync(object netID)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<User> GetUserByIdAsync(long netId)
         {
             throw new NotImplementedException();
@@ -51,6 +57,11 @@ namespace ReservationApp.Services
         }
 
         public Task UpdateUserAsync(User user)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<RoomResController> IUserService.GetAsync(object NetID)
         {
             throw new NotImplementedException();
         }

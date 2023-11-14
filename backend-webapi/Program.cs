@@ -5,12 +5,14 @@ using Microsoft.Extensions.Hosting;
 using ReservationApp.Services; 
 using ReservationApp.Models;
 using System.IO;
-using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes; //Will this work?
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 builder.Services.AddControllers();
+
+
 
 void ConfigureServices(IServiceCollection services)
 {
@@ -51,6 +53,9 @@ var dbPath = Path.Combine(builder.Environment.ContentRootPath, "dev.sqlite3");
     builder.Services.AddScoped<IDeviceResService, DeviceResService>();
     builder.Services.AddScoped<IRoomResService, RoomResService>();
     builder.Services.AddScoped<IUserService, UserService>();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+    builder.Services.AddControllers();
 
 
 var app = builder.Build();
@@ -58,7 +63,8 @@ var app = builder.Build();
 
     if (app.Environment.IsDevelopment())
     {
-        app.UseDeveloperExceptionPage();
+        app.UseSwagger();
+        app.UseSwaggerUI();
     }
 
     app.UseHttpsRedirection();

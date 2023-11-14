@@ -1,6 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema; //Should be good, need to check schema
 
 namespace Reservation.Models
 {
@@ -28,7 +28,7 @@ namespace Reservation.Models
         public string Location { get; set; }
 
 
-        public bool Available { get; set; } // Assuming this is a boolean in your database
+        public bool Available { get; set; } // Assuming this is a boolean in database
         public long ReservedNetID { get; internal set; }
         public string AssignedTo { get; internal set; }
 

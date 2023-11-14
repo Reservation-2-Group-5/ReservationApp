@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations; //Should be good but need to check schema
 
 namespace ReservationApp.Models
 {

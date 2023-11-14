@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Reservation.Controllers;
 using ReservationApp.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -45,6 +46,31 @@ namespace ReservationApp.Services
                 _context.RoomReservations.Remove(roomRes);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public Task GetAllRoomReservations()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<RoomResController> GetAllAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<RoomResController> GetAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<RoomResController> DeleteAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<RoomResController> SubmitAsync(RoomReservationDto roomReservationDto)
+        {
+            throw new NotImplementedException();
         }
     }
 }

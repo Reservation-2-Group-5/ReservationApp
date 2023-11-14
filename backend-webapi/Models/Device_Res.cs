@@ -1,7 +1,7 @@
 ﻿using Reservation.Models;
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema; //Need to update models if database has changed
 
 namespace ReservationApp.Models
 {
