@@ -2,7 +2,7 @@
 using ReservationApp.Models;
 using ReservationApp.Services;
 using System;
-using System.Threading.Tasks;
+using System.Threading.Tasks; //Should be good?
 
 [Route("api/v1/[controller]")]
 [ApiController]
@@ -83,7 +83,7 @@ public class DeviceResController : ControllerBase
                 await _deviceResService.DeleteDeviceReservationAsync(id);
                 var device = await _deviceService.GetDeviceByTagAsync(reservation.DeviceTag);
                 device.Available = true;
-                device.ReservedNetID = null;
+                device.Reserved_NetID = null;
                 device.AssignedTo = null;
 
                 await _deviceService.UpdateDeviceAsync(device);

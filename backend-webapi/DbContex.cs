@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Reservation.Models;
-using ReservationApp.Models; 
+using ReservationApp.Models; //Should be good
 
 public class AppDbContext : DbContext
 {
@@ -8,7 +8,7 @@ public class AppDbContext : DbContext
     {
     }
 
-    // DbSet properties for your models/entities
+    // DbSet properties for models/entities
     public DbSet<User> Users { get; set; }
     public DbSet<Device> Devices { get; set; }
     public DbSet<DeviceRes> DeviceReservations { get; set; }

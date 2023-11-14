@@ -14,6 +14,9 @@ namespace ReservationApp.Services
         Task DeleteRoomReservationAsync(int id);
         Task GetAllRoomReservations();
         Task<RoomResController> GetAllAsync();
+        Task<RoomResController> GetAsync(int id);
+        Task<RoomResController> DeleteAsync(int id);
+        Task<RoomResController> SubmitAsync(RoomReservationDto roomReservationDto);
     }
 
     public interface IRoomService
@@ -24,5 +27,6 @@ namespace ReservationApp.Services
         Task<IEnumerable<Room>> FindRoomsAsync(string building, string room, DateTime date);
         Task<IEnumerable<Room>> FindRoomsAsync(string building, string room);
         Task<IEnumerable<Room>> FindRoomsAsync(string building);
+        Task UpdateRoomStatus(object building, object room, bool v, object value1, object value2);
     }
 }

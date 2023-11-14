@@ -3,7 +3,7 @@ using ReservationApp.Models;
 using ReservationApp.Services;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; //Need to fix this one
 
 [Route("api/v1/[controller]")]
 [ApiController]
@@ -28,7 +28,7 @@ public class RoomsController : ControllerBase
     [HttpGet("{building}/{room}/{date}/{time}")]
     public async Task<ActionResult<Room>> GetRoom(string building, string room, DateTime date, DateTime time)
     {
-        var room = await _roomService.GetRoomAsync(building, room, date, time);
+        _ = await _roomService.GetRoomAsync(building, room, date, time);
         if (room != null)
         {
             return Ok(room);

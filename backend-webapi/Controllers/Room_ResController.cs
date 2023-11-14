@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ReservationApp.Services;
 using System;
 using System.Threading.Tasks;
-namespace Reservation.Controllers
+namespace Reservation.Controllers //Need to fix this one
 {
     [Route("api/v1/[controller]")]
     [ApiController]
@@ -11,7 +11,12 @@ namespace Reservation.Controllers
     {
         private readonly IRoomResService _roomResService; 
         private readonly IUserService _userService; 
-        private readonly IRoomService _roomService; 
+        private readonly IRoomService _roomService;
+
+        public object Building { get; private set; }
+        public object Room { get; private set; }
+        public object NetID { get; private set; }
+        public object Name { get; private set; }
 
         public RoomResController(IRoomResService roomResService, IUserService userService, IRoomService roomService)
         {
@@ -83,5 +88,17 @@ namespace Reservation.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+    }
+
+    public class ReservationStatusUpdateDto
+    {
+        public string Status { get; internal set; }
+    }
+
+    public class RoomReservationDto
+    {
+        public object Building { get; internal set; }
+        public object Room { get; internal set; }
+        public object NetID { get; internal set; }
     }
 }

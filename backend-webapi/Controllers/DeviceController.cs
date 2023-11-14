@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Reservation.Models;
 using ReservationApp.Models;
-using ReservationApp.Services; // This namespace would contain your IDeviceService interface
+using ReservationApp.Services; 
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; //Need to redo this one
 
 namespace ReservationApp.Controllers
 {

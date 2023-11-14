@@ -2,7 +2,7 @@
 using Reservation.Models;
 using ReservationApp.Models;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Threading.Tasks; //Should be good
 
 namespace ReservationApp.Services
 {
@@ -43,7 +43,7 @@ namespace ReservationApp.Services
             {
                 if (!DeviceExists(device.Tag))
                 {
-                    return; // You can choose to throw an exception or handle it as per your business logic
+                    return; 
                 }
                 else
                 {
