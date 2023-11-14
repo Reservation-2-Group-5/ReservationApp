@@ -1,25 +1,67 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using ReservationApp.Services; 
+using ReservationApp.Models;
+using System.IO;
+using Google.Protobuf.WellKnownTypes;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+void ConfigureServices(IServiceCollection services)
+{
+    services.AddCors(c =>
+    {
+        c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    });
+
+    services.AddControllers();
+}
+
+void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+{
+    app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    if (env.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+    }
+
+    app.UseRouting();
+
+    app.UseAuthorization();
+
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllers();
+    });
+
+    
+    }
+
+var dbPath = Path.Combine(builder.Environment.ContentRootPath, "dev.sqlite3");
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlite($"Data Source={dbPath}"));
+
+
+    builder.Services.AddScoped<IDeviceService, DeviceService>();
+    builder.Services.AddScoped<IDeviceResService, DeviceResService>();
+    builder.Services.AddScoped<IRoomResService, RoomResService>();
+    builder.Services.AddScoped<IUserService, UserService>();
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
-app.UseHttpsRedirection();
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+    }
 
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+    app.UseHttpsRedirection();
+    app.UseAuthorization();
+    app.MapControllers();
+    app.Run();
