@@ -1,96 +1,63 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ReservationApp.Models;
 using ReservationApp.Services;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-
-namespace Reservation.Controllers
+[Route("api/v1/[controller]")]
+[ApiController]
+public class RoomsController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class RoomResController : ControllerBase
+    private readonly IRoomService _roomService;
+
+    public RoomsController(IRoomService roomService)
     {
-       
-        private readonly IRoomResService _service;
+        _roomService = roomService;
+    }
 
-        public RoomResController(IRoomResService service)
+    // GET /api/v1/rooms
+    [HttpGet("")]
+    public async Task<ActionResult<IEnumerable<Room>>> GetAllRooms()
+    {
+        var rooms = await _roomService.GetAllRoomsAsync();
+        return Ok(rooms);
+    }
+
+    // GET /api/v1/rooms/:Building/:Room/:Date/:Time
+    [HttpGet("{building}/{room}/{date}/{time}")]
+    public async Task<ActionResult<Room>> GetRoom(string building, string room, DateTime date, DateTime time)
+    {
+        var room = await _roomService.GetRoomAsync(building, room, date, time);
+        if (room != null)
         {
-            _service = service;
+            return Ok(room);
         }
-
-        // GET: api/RoomRes
-        [HttpGet]
-        public async Task<IActionResult> GetRoomReservations()
+        else
         {
-            var roomReservations = await _service.GetAllRoomReservations();
-            return Ok(roomReservations);
+            return NotFound();
         }
+    }
 
-        // GET: api/RoomRes/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetRoomReservation(long id)
-        {
-            var roomReservation = await _service.GetRoomReservationById(id);
-            if (roomReservation == null)
-            {
-                return NotFound();
-            }
-            return Ok(roomReservation);
-        }
+    // Additional routes for different combinations of parameters
+    [HttpGet("{building}/{room}/{date}")]
+    public async Task<ActionResult<IEnumerable<Room>>> GetRoomsByBuildingRoomDate(string building, string room, DateTime date)
+    {
+        var rooms = await _roomService.FindRoomsAsync(building, room, date);
+        return Ok(rooms);
+    }
 
-        // POST: api/RoomRes
-        [HttpPost]
-        public async Task<IActionResult> CreateRoomReservation([FromBody] RoomRes roomRes)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+    [HttpGet("{building}/{room}")]
+    public async Task<ActionResult<IEnumerable<Room>>> GetRoomsByBuildingRoom(string building, string room)
+    {
+        var rooms = await _roomService.FindRoomsAsync(building, room);
+        return Ok(rooms);
+    }
 
-            var createdRoomRes = await _service.CreateRoomReservation(roomRes);
-            return CreatedAtAction(nameof(GetRoomReservation), new { id = createdRoomRes.NetID }, createdRoomRes);
-        }
-
-        // PUT: api/RoomRes/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateRoomReservation(long id, [FromBody] RoomRes roomRes)
-        {
-            if (id != roomRes.NetID)
-            {
-                return BadRequest();
-            }
-
-            try
-            {
-                await _service.UpdateRoomReservation(roomRes);
-            }
-            catch (Exception)
-            {
-                // Check if the room reservation exists
-                var exists = await _service.RoomReservationExists(id);
-                if (!exists)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // DELETE: api/RoomRes/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteRoomReservation(long id)
-        {
-            var roomReservation = await _service.DeleteRoomReservation(id);
-            if (roomReservation == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(roomReservation);
-        }
+    [HttpGet("{building}")]
+    public async Task<ActionResult<IEnumerable<Room>>> GetRoomsByBuilding(string building)
+    {
+        var rooms = await _roomService.FindRoomsAsync(building);
+        return Ok(rooms);
     }
 }

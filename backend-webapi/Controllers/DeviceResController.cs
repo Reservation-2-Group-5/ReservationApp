@@ -1,88 +1,100 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ReservationApp.Models;
-using ReservationApp.Services; 
-using System.Collections.Generic;
+using ReservationApp.Services;
+using System;
 using System.Threading.Tasks;
 
-namespace ReservationApp.Controllers
+[Route("api/v1/[controller]")]
+[ApiController]
+public class DeviceResController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class DeviceResController : ControllerBase
+    private readonly IDeviceResService _deviceResService;
+    private readonly IDeviceService _deviceService;
+    private readonly IUserService _userService;
+
+    public DeviceResController(
+        IDeviceResService deviceResService,
+        IDeviceService deviceService,
+        IUserService userService)
     {
-        private readonly IDeviceResService _deviceResService;
+        _deviceResService = deviceResService;
+        _deviceService = deviceService;
+        _userService = userService;
+    }
 
-        public DeviceResController(IDeviceResService deviceResService)
+    // GET api/v1/device-res
+    [HttpGet("")]
+    public async Task<IActionResult> GetAllDeviceReservations()
+    {
+        try
         {
-            _deviceResService = deviceResService;
+            var deviceReservations = await _deviceResService.GetAllDeviceReservationsAsync();
+            return Ok(deviceReservations);
         }
-
-        // GET: api/DeviceRes
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<DeviceRes>>> GetDeviceReservations()
+        catch (Exception ex)
         {
-            return Ok(await _deviceResService.GetAllDeviceReservationsAsync());
+           
+            return StatusCode(500, ex.Message);
         }
+    }
 
-        // GET: api/DeviceRes/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<DeviceRes>> GetDeviceReservation(int id)
+    // POST api/v1/device-res
+    [HttpPost("")]
+    public async Task<IActionResult> SubmitDeviceReservation([FromBody] DeviceRes deviceRes)
+    {
+        try
         {
-            var deviceReservation = await _deviceResService.GetDeviceReservationByIdAsync(id);
-            if (deviceReservation == null)
-            {
-                return NotFound();
-            }
-            return deviceReservation;
+            var submittedDeviceRes = await _deviceResService.CreateDeviceReservationAsync(deviceRes);
+            var user = await _userService.GetUserByIdAsync(deviceRes.NetID);
+
+            
+            var device = await _deviceService.GetDeviceByTagAsync(deviceRes.DeviceTag);
+            device.Available = false;
+            device.ReservedNetID = user.NetID;
+            device.AssignedTo = user.Name;
+
+            await _deviceService.UpdateDeviceAsync(device);
+
+            return Ok(submittedDeviceRes);
         }
-
-        // POST: api/DeviceRes
-        [HttpPost]
-        public async Task<ActionResult<DeviceRes>> PostDeviceReservation([FromBody] DeviceRes deviceRes)
+        catch (Exception ex)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var createdDeviceRes = await _deviceResService.CreateDeviceReservationAsync(deviceRes);
-            return CreatedAtAction(nameof(GetDeviceReservation), new { id = createdDeviceRes.Id }, createdDeviceRes);
+           
+            return StatusCode(500, ex.Message);
         }
+    }
 
-        // PUT: api/DeviceRes/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutDeviceReservation(int id, [FromBody] DeviceRes deviceRes)
+    // PUT api/v1/room-res/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateRoomReservationStatus(int id, [FromBody] string status)
+    {
+        try
         {
-            if (id != deviceRes.Id)
+            var reservation = await _deviceResService.GetDeviceReservationByIdAsync(id);
+
+            if (status == "approved")
             {
-                return BadRequest();
+              
+                await _deviceResService.DeleteDeviceReservationAsync(id);
+            }
+            else if (status == "denied")
+            {
+                
+                await _deviceResService.DeleteDeviceReservationAsync(id);
+                var device = await _deviceService.GetDeviceByTagAsync(reservation.DeviceTag);
+                device.Available = true;
+                device.ReservedNetID = null;
+                device.AssignedTo = null;
+
+                await _deviceService.UpdateDeviceAsync(device);
             }
 
-            try
-            {
-                await _deviceResService.UpdateDeviceReservationAsync(deviceRes);
-            }
-            catch
-            {
-                // Add logic to check if the device reservation actually exists
-                return NotFound();
-            }
-
-            return NoContent();
+            return Ok(new { message = "Reservation processed successfully." });
         }
-
-        // DELETE: api/DeviceRes/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDeviceReservation(int id)
+        catch (Exception ex)
         {
-            var deviceReservation = await _deviceResService.GetDeviceReservationByIdAsync(id);
-            if (deviceReservation == null)
-            {
-                return NotFound();
-            }
-
-            await _deviceResService.DeleteDeviceReservationAsync(id);
-            return NoContent();
+            
+            return StatusCode(500, ex.Message);
         }
     }
 }

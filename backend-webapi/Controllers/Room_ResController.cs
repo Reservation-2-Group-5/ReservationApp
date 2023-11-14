@@ -1,82 +1,86 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
+using ReservationApp.Services;
+using System;
+using System.Threading.Tasks;
 namespace Reservation.Controllers
 {
-    public class Room_ResController : Controller
+    [Route("api/v1/[controller]")]
+    [ApiController]
+    public class RoomResController : ControllerBase
     {
-        // GET: HomeController
-        public ActionResult Index()
+        private readonly IRoomResService _roomResService; 
+        private readonly IUserService _userService; 
+        private readonly IRoomService _roomService; 
+
+        public RoomResController(IRoomResService roomResService, IUserService userService, IRoomService roomService)
         {
-            return View();
+            _roomResService = roomResService;
+            _userService = userService;
+            _roomService = roomService;
         }
 
-        // GET: HomeController/Details/5
-        public ActionResult Details(int id)
-        {
-            return View();
-        }
-
-        // GET: HomeController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: HomeController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        // GET /api/v1/room-res
+        [HttpGet]
+        public async Task<IActionResult> GetAllRoomReservations()
         {
             try
             {
-                return RedirectToAction(nameof(Index));
+                var roomReservations = await _roomResService.GetAllAsync();
+                return Ok(roomReservations);
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                // Handle exception
+                return StatusCode(500, ex.Message);
             }
         }
 
-        // GET: HomeController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
-
-        // POST: HomeController/Edit/5
+        // POST /api/v1/room-res
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<IActionResult> SubmitRoomReservation([FromBody] RoomReservationDto roomReservationDto)
         {
             try
             {
-                return RedirectToAction(nameof(Index));
+                var roomReservation = await _roomResService.SubmitAsync(roomReservationDto);
+                var user = await _userService.GetAsync(roomReservationDto.NetID);
+
+                // Set room to unavailable and assign it to the user
+                await _roomService.UpdateRoomStatus(roomReservationDto.Building, roomReservationDto.Room, false, user.NetID, user.Name);
+
+                return Ok(roomReservation);
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                // Handle exception
+                return StatusCode(500, ex.Message);
             }
         }
 
-        // GET: HomeController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: HomeController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        // PUT /api/v1/room-res/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> ProcessRoomReservation(int id, [FromBody] ReservationStatusUpdateDto updateDto)
         {
             try
             {
-                return RedirectToAction(nameof(Index));
+                var reservation = await _roomResService.GetAsync(id);
+
+                if (updateDto.Status == "approved")
+                {
+                    await _roomResService.DeleteAsync(id);
+                }
+                else if (updateDto.Status == "denied")
+                {
+                    await _roomResService.DeleteAsync(id);
+                    await _roomService.UpdateRoomStatus(reservation.Building, reservation.Room, true, null, null);
+                }
+
+                return Ok(new { message = "Reservation processed successfully." });
             }
-            catch
+            catch (Exception ex)
             {
-                return View();
+                // Handle exception
+                return StatusCode(500, ex.Message);
             }
         }
     }

@@ -8,27 +8,29 @@ namespace Reservation.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Tag { get; set; } // Assuming 'Tag' is the primary key and is an int
+        public int Tag { get; set; } 
 
         [Required]
-        [StringLength(255)] // Assuming there's a max length for Model_Category in the database
+        [StringLength(255)] 
         public string Model_Category { get; set; }
 
         [Required]
-        [StringLength(255)] // Assuming there's a max length for Device_Display_Name in the database
+        [StringLength(255)] 
         public string Device_Display_Name { get; set; }
 
-        [StringLength(255)] // Adjust string length according to database constraints
+        [StringLength(255)] 
         public string Assigned_To { get; set; }
 
-        [StringLength(255)] // Adjust string length according to database constraints
+        [StringLength(255)] 
         public string Reserved_NetID { get; set; }
 
-        [StringLength(255)] // Adjust string length according to database constraints
+        [StringLength(255)] 
         public string Location { get; set; }
 
 
         public bool Available { get; set; } // Assuming this is a boolean in your database
+        public long ReservedNetID { get; internal set; }
+        public string AssignedTo { get; internal set; }
 
         // Maybe include navigation properties for related entities if using Entity Framework????
         // public virtual User AssignedUser { get; set; }
