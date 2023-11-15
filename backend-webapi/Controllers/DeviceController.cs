@@ -7,7 +7,7 @@ using System.Threading.Tasks; //Need to redo this one
 
 namespace ReservationApp.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/device")]
     [ApiController]
     public class DeviceController : ControllerBase
     {

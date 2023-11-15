@@ -4,7 +4,7 @@ using ReservationApp.Services;
 using System.Collections.Generic;
 using System.Threading.Tasks; //Should be good?
 
-[Route("api/v1/[controller]")]
+[Route("api/v1/users")]
 [ApiController]
 public class UsersController : ControllerBase
 {

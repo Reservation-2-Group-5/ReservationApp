@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks; //Need to fix this one
 
-[Route("api/v1/[controller]")]
+[Route("api/v1/rooms")]
 [ApiController]
 public class RoomsController : ControllerBase
 {
