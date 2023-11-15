@@ -47,7 +47,9 @@ const formatInventoryData = (data) => {
     newItem.serialNumber = item.Serial_Number;
     newItem.poNumber = item.PO;
     newItem.warrantyExpiration = fixDate(item.Warranty_EXP);
-    newItem.available = (item.Available) ? 'available' : 'unavailable';
+    // eslint-disable-next-line no-nested-ternary
+    newItem.available = (item.Available) ? 'available'
+      : (newItem.netId) ? 'unavailable' : 'pending';
 
     formattedData.push(newItem);
   }

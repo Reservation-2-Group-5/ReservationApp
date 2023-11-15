@@ -261,8 +261,17 @@ async function handleSubmit() {
   const endTimeStr = selectedEndDate.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   console.log(roomEntries); // all the room entries that match the selected room and time blocks
-  // TODO: if there are no room entries, then the user is trying to request too far in advance
+  // if there are no room entries, then the user is trying to request too far in advance
   // the db hasn't seeded any room entries more than 30 days in advance
+  if (roomEntries.length === 0) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'You cannot reserve a room more than 30 days in advance.',
+      life: toastDuration,
+    });
+    return false;
+  }
 
   // add netid to room entries
   for (const entry of roomEntries) {
@@ -361,9 +370,8 @@ const calendarOptions = reactive({
   selectOverlap: false,
   select: handleSelect,
   eventMouseEnter: (mouseEnterInfo) => {
-    // set cursor to disabled if event is not available
-    const colorPattern = new RegExp(`(${unavailableColor}|${pendingColor})`);
-    if (mouseEnterInfo.event.backgroundColor.match(colorPattern)) {
+    // set cursor to disabled if time slot is not available
+    if (mouseEnterInfo.event.display === 'background') {
       mouseEnterInfo.el.style.cursor = 'not-allowed';
     }
   },
