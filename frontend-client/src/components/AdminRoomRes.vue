@@ -1,5 +1,4 @@
 <template>
-  <Toast />
   <div class="card">
     <!-- Toggle between table and calendar view? -->
     <ProgressBar v-if="loading" mode="indeterminate" style="height: 6px" />
@@ -43,7 +42,6 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import FullCalendar from '@fullcalendar/vue3';
 import timeGridPlugin from '@fullcalendar/timegrid';

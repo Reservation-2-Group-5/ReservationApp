@@ -1,5 +1,4 @@
 <template>
-  <Toast />
   <div class="card">
     <DataTable
       :loading="loading"
@@ -182,7 +181,6 @@ import AutoComplete from 'primevue/autocomplete';
 import Dialog from 'primevue/dialog';
 import Divider from 'primevue/divider';
 import Card from 'primevue/card';
-import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { storeToRefs } from 'pinia';
 import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
@@ -435,7 +433,7 @@ async function requestData() {
 // fetch data when the view is created
 onMounted(async () => {
   await requestData();
-  // console.log('inventory', inventory.value);
+  console.log('inventory', inventory.value);
 });
 </script>
 
