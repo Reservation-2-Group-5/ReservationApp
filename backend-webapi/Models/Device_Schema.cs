@@ -12,25 +12,32 @@ namespace Reservation.Models
 
         [Required]
         [StringLength(255)] 
-        public string Model_Category { get; set; }
+        public required string Model_Category { get; set; }
 
         [Required]
         [StringLength(255)] 
-        public string Device_Display_Name { get; set; }
+        public required string Device_Display_Name { get; set; }
 
         [StringLength(255)] 
-        public string Assigned_To { get; set; }
+        public required string Assigned_To { get; set; }
 
         [StringLength(255)] 
-        public string Reserved_NetID { get; set; }
+        public required string Reserved_NetID { get; set; }
 
         [StringLength(255)] 
-        public string Location { get; set; }
+        public required string Location { get; set; }
 
+        public required string Funding_Source { get; set; }
+        public required string Dept_Ownership {  get; set; }
+        public required string Serial_Number { get; set; }
+        public int PO {  get; set; }
+        public DateOnly Warranty_EXP { get; set; }
 
         public bool Available { get; set; } // Assuming this is a boolean in database
-        public long ReservedNetID { get; internal set; }
-        public string AssignedTo { get; internal set; }
+        
+
+
+        
 
         // Maybe include navigation properties for related entities if using Entity Framework????
         // public virtual User AssignedUser { get; set; }

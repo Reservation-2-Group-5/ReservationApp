@@ -5,7 +5,7 @@ using System;
 using System.Threading.Tasks;
 namespace Reservation.Controllers //Need to fix this one
 {
-    [Route("api/v1/roomres")]
+    [Route("api/v1/room-res")]
     [ApiController]
     public class RoomResController : ControllerBase
     {

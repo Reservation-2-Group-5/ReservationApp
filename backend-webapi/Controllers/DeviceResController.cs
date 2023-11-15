@@ -4,7 +4,7 @@ using ReservationApp.Services;
 using System;
 using System.Threading.Tasks; //Should be good?
 
-[Route("api/v1/deviceres")]
+[Route("api/v1/device-res")]
 [ApiController]
 public class DeviceResController : ControllerBase
 {
@@ -48,10 +48,10 @@ public class DeviceResController : ControllerBase
             var user = await _userService.GetUserByIdAsync(deviceRes.NetID);
 
             
-            var device = await _deviceService.GetDeviceByTagAsync(deviceRes.DeviceTag);
+            var device = await _deviceService.GetDeviceByTagAsync(deviceRes.Tag);
             device.Available = false;
-            device.ReservedNetID = user.NetID;
-            device.AssignedTo = user.Name;
+            
+            device.Assigned_To = user.Name;
 
             await _deviceService.UpdateDeviceAsync(device);
 
@@ -81,10 +81,10 @@ public class DeviceResController : ControllerBase
             {
                 
                 await _deviceResService.DeleteDeviceReservationAsync(id);
-                var device = await _deviceService.GetDeviceByTagAsync(reservation.DeviceTag);
+                var device = await _deviceService.GetDeviceByTagAsync(reservation.Tag);
                 device.Available = true;
-                device.Reserved_NetID = null;
-                device.AssignedTo = null;
+                
+                device.Assigned_To = null;
 
                 await _deviceService.UpdateDeviceAsync(device);
             }
