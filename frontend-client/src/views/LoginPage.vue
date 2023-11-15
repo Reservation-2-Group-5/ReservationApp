@@ -14,16 +14,30 @@ import { onMounted } from 'vue';
 import { useUserStore } from '@/store';
 import { useRouter } from 'vue-router';
 import Card from 'primevue/card';
+import { useToast } from 'primevue/usetoast';
+
+const toast = useToast();
 
 const userStore = useUserStore();
 const router = useRouter();
 
 onMounted(async () => {
   // TODO: Remove this once we have proper login
-  await userStore.login();
-  console.log('Logged in:', userStore.user);
+  try {
+    await userStore.login();
+    console.log('Logged in:', userStore.user);
+  } catch (e) {
+    console.error(e);
+    toast.add({
+      severity: 'error',
+      summary: 'Login failed',
+      detail: e.message,
+      life: 5000,
+    });
+  }
+
   const to = router.currentRoute.value.query?.redirect ?? null;
-  if (to) {
+  if (to && userStore.isLoggedIn) {
     router.push(to);
   } else {
     router.back();

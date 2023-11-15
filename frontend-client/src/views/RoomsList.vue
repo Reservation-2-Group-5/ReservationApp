@@ -1,5 +1,4 @@
 <template>
-  <Toast />
   <div class="card">
     <div class="top">
       <Dropdown :loading="loading" v-model="selectedRoom" :options="groupedRooms" optionLabel="label" optionGroupLabel="label" optionGroupChildren="items" :placeholder="dropdownPlaceholder" style="width: fit-content" @update:modelValue="setEvents" ref="dropdown" />
@@ -99,7 +98,6 @@ import Dialog from 'primevue/dialog';
 import Card from 'primevue/card';
 import Divider from 'primevue/divider';
 import Calendar from 'primevue/calendar';
-import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { useRoomStore, useUserStore, useRoomReservationStore } from '@/store';
 import { storeToRefs } from 'pinia';

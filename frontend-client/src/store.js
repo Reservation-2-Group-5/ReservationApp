@@ -3,11 +3,11 @@ import { ref, computed } from 'vue';
 
 const API = 'api/v1';
 
-const apiAccessible = async () => {
-  const apiLocation = '/api';
-  const apiResponse = await fetch(apiLocation, { method: 'HEAD' });
-  return apiResponse.status === 200;
-};
+// const apiAccessible = async () => {
+//   const apiLocation = '/api';
+//   const apiResponse = await fetch(apiLocation, { method: 'HEAD' });
+//   return apiResponse.status === 200;
+// };
 
 const fixDate = (date) => {
   if (date && (typeof date === 'string' || typeof date === 'number')) {
@@ -146,11 +146,21 @@ export const useUserStore = defineStore('user', () => {
 
   async function fetchUsers() {
     try {
+      // Check if /api is accessible
+      // const useApi = await apiAccessible();
+      // // console.log('useApi', useApi);
+      // if (!useApi) return; // don't fetch if api is not accessible
+
       const response = await fetch(`${API}/users`);
+      console.log('users response', response);
+      if (response.status === 500) {
+        throw new Error('Error fetching users');
+      }
       const json = await response.json();
+      console.log('users json', json);
       setUsers(json);
     } catch (err) {
-      console.error(err);
+      throw new Error(err);
     }
   }
 
@@ -185,12 +195,15 @@ export const useInventoryStore = defineStore('inventory', () => {
   const fetchInventory = async () => {
     try {
       // Check if /api is accessible
-      const useApi = await apiAccessible();
-      if (!useApi) return; // don't fetch if api is not accessible
+      // const useApi = await apiAccessible();
+      // console.log('useApi', useApi);
+      // if (!useApi) return; // don't fetch if api is not accessible
 
       // Fetch device reservations
       const response = await fetch(`${API}/devices`);
+      console.log('devices response', response);
       const json = await response.json();
+      console.log('devices json', json);
       setInventory(json);
     } catch (err) {
       console.error(err);
@@ -222,13 +235,14 @@ export const useDeviceReservationStore = defineStore('deviceReservation', () => 
   const fetchReservations = async () => {
     try {
       // Check if /api is accessible
-      const useApi = await apiAccessible();
-      if (!useApi) return; // don't fetch if api is not accessible
+      // const useApi = await apiAccessible();
+      // if (!useApi) return; // don't fetch if api is not accessible
 
       // Fetch device reservations
       const response = await fetch(`${API}/device-res`);
+      console.log('device-res response', response);
       const json = await response.json();
-
+      console.log('device-res json', json);
       setReservations(json);
     } catch (err) {
       console.error(err);
@@ -249,8 +263,9 @@ export const useDeviceReservationStore = defineStore('deviceReservation', () => 
       },
       body: JSON.stringify(body),
     });
+    console.log('put device-res response', response);
     const json = await response.json();
-    console.log(json);
+    console.log('put device-res json', json);
     if (response.status === 500 || response.status === 400) {
       throw new Error(json.message);
     }
@@ -284,8 +299,9 @@ export const useDeviceReservationStore = defineStore('deviceReservation', () => 
       },
       body: JSON.stringify(body),
     });
+    console.log('post device-res response', response);
     const json = await response.json();
-    console.log(json);
+    console.log('post device-res json', json);
     if (response.status === 500 || response.status === 400) {
       throw new Error('Error creating reservation');
     }
@@ -323,12 +339,14 @@ export const useRoomStore = defineStore('rooms', () => {
   const fetchRooms = async () => {
     try {
       // Check if /api is accessible
-      const useApi = await apiAccessible();
-      if (!useApi) return; // don't fetch if api is not accessible
+      // const useApi = await apiAccessible();
+      // if (!useApi) return; // don't fetch if api is not accessible
 
       // Fetch device reservations
       const response = await fetch(`${API}/rooms`);
+      console.log('rooms response', response);
       const json = await response.json();
+      console.log('rooms json', json);
       setRooms(json);
     } catch (err) {
       console.error(err);
@@ -360,13 +378,14 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
   const fetchReservations = async () => {
     try {
       // Check if /api is accessible
-      const useApi = await apiAccessible();
-      if (!useApi) return; // don't fetch if api is not accessible
+      // const useApi = await apiAccessible();
+      // if (!useApi) return; // don't fetch if api is not accessible
 
       // Fetch room reservations
       const response = await fetch(`${API}/room-res`);
+      console.log('room-res response', response);
       const json = await response.json();
-
+      console.log('room-res json', json);
       setReservations(json);
     } catch (err) {
       console.error(err);
@@ -394,8 +413,9 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
       },
       body: JSON.stringify(body),
     });
+    console.log('put room-res response', response);
     const json = await response.json();
-    console.log(json);
+    console.log('put room-res json', json);
     // match all error codes
     if (response.status === 500
       || response.status === 400
@@ -439,8 +459,9 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
       },
       body: JSON.stringify(body),
     });
+    console.log('post room-res response', response);
     const json = await response.json();
-    console.log(json);
+    console.log('post room-res json', json);
     if (response.status === 500 || response.status === 400) {
       throw new Error('Error creating reservation');
     }

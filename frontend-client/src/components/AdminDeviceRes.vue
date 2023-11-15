@@ -1,5 +1,4 @@
 <template>
-  <Toast ref="toastRef" />
   <div class="card">
     <DataTable
       :loading="loading"
@@ -208,7 +207,6 @@ import Button from 'primevue/button';
 import AutoComplete from 'primevue/autocomplete';
 import MultiSelect from 'primevue/multiselect';
 import Calendar from 'primevue/calendar';
-import Toast from 'primevue/toast';
 import { useDeviceReservationStore } from '@/store';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue/usetoast';
@@ -242,7 +240,6 @@ const requestees = ref([]);
 const fundingSources = ref([]);
 const departments = ref([]);
 const expandedRows = ref([]);
-const toastRef = ref();
 
 // set the default filter operators and constraints
 const filters = ref();
