@@ -59,7 +59,7 @@ const formatRoomData = (data) => {
   for (const room of data) {
     const newRoom = {};
     newRoom.building = room.Building;
-    newRoom.room = room.Room;
+    newRoom.room = room.RoomNumber;
     newRoom.date = fixDate(room.Date);
     newRoom.time = room.Time;
     newRoom.available = (room.Available) ? 'available' : 'unavailable';
@@ -110,7 +110,7 @@ const formatRoomReservationData = (data) => {
 
     newRes.id = res.id;
     newRes.building = res.Building;
-    newRes.room = res.Room;
+    newRes.room = res.RoomNumber;
     newRes.date = fixDate(res.Date);
     newRes.time = res.Time;
     newRes.available = (res.Available) ? 'available' : 'unavailable';
@@ -379,7 +379,7 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
     for (const res of resArr) {
       body.push({
         Building: res.building,
-        Room: res.room,
+        RoomNumber: res.room,
         Date: res.date.getTime(),
         Time: res.time,
         NetID: res.reqNetId,
@@ -426,7 +426,7 @@ export const useRoomReservationStore = defineStore('roomReservation', () => {
     for (const res of resArr) {
       body.push({
         Building: res.building,
-        Room: res.room,
+        RoomNumber: res.room,
         Date: res.date.getTime(),
         Time: res.time,
         NetID: res.reqNetId,

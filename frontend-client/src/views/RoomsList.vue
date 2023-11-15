@@ -106,6 +106,7 @@ import { storeToRefs } from 'pinia';
 
 const unavailableColor = '#66000088';
 const pendingColor = '#885000';
+const ownColor = '#006600';
 
 // get the room store
 const roomStore = useRoomStore();
@@ -173,7 +174,9 @@ function setEvents() {
       title: (isPending) ? 'Pending approval' : `${r.reservedBy} (${r.reservedByNetId})`,
       start,
       end,
-      color: (isPending) ? pendingColor : unavailableColor,
+      // eslint-disable-next-line no-nested-ternary
+      color: (isPending) ? pendingColor
+        : (r.reservedByNetId === userStore.user.netId) ? ownColor : unavailableColor,
       textColor: '#eee',
       display: 'background',
     });
