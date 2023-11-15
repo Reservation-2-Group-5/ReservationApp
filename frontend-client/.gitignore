@@ -27,3 +27,8 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3

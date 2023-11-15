@@ -91,10 +91,38 @@
         </template>
       </Column>
       <Column field="serialNumber" header="Serial #" style="min-width: 7rem" v-bind="filterAttributes" />
-      <Column field="poNumber" header="PO #" v-bind="filterAttributes" />
+      <Column field="poNumber" header="PO#" v-bind="filterAttributes" />
       <Column field="warrantyExpiration" header="Warranty Expiration" dataType="date" v-bind="filterAttributes" :showFilterMatchModes="true" :maxConstraints="2">
         <template #body="{ data }">
-          {{ formatDate(data.warrantyExpiration) }}
+          <div v-tooltip.left="formatDate(data.warrantyExpiration, true)">
+            {{ formatDate(data.warrantyExpiration) }}
+          </div>
+        </template>
+        <template #filter="{ filterModel }">
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
+        </template>
+      </Column>
+      <Column field="startDate" dataType="date" v-bind="filterAttributes" :showFilterMatchModes="true" :maxConstraints="2">
+        <template #header>
+          <span class="p-column-title" v-tooltip.top="'Reservation Start Date'">Res Start</span>
+        </template>
+        <template #body="{ data }">
+          <div v-tooltip.left="formatDate(data.startDate, true)">
+            {{ (data.startDate) ? formatDate(data.startDate) : 'None' }}
+          </div>
+        </template>
+        <template #filter="{ filterModel }">
+          <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
+        </template>
+      </Column>
+      <Column field="endDate" dataType="date" v-bind="filterAttributes" :showFilterMatchModes="true" :maxConstraints="2">
+        <template #header>
+          <span class="p-column-title" v-tooltip.top="'Reservation End Date'">Res End</span>
+        </template>
+        <template #body="{ data }">
+          <div v-tooltip.left="formatDate(data.endDate, true)">
+            {{ (data.endDate) ? formatDate(data.endDate) : 'None' }}
+          </div>
         </template>
         <template #filter="{ filterModel }">
           <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
