@@ -361,9 +361,8 @@ const calendarOptions = reactive({
   selectOverlap: false,
   select: handleSelect,
   eventMouseEnter: (mouseEnterInfo) => {
-    // set cursor to disabled if event is not available
-    const colorPattern = new RegExp(`(${unavailableColor}|${pendingColor})`);
-    if (mouseEnterInfo.event.backgroundColor.match(colorPattern)) {
+    // set cursor to disabled if time slot is not available
+    if (mouseEnterInfo.event.display === 'background') {
       mouseEnterInfo.el.style.cursor = 'not-allowed';
     }
   },
