@@ -42,7 +42,6 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import { useToast } from 'primevue/usetoast';
 import FullCalendar from '@fullcalendar/vue3';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -50,6 +49,7 @@ import ProgressBar from 'primevue/progressbar';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import ProfileName from '@/components/inventory-list/ProfileName.vue';
+import toast from '@/utils/toastWrapper';
 import { useRoomReservationStore } from '@/store';
 import { storeToRefs } from 'pinia';
 import { formatDate } from '@/utils/dataTableFilters';
@@ -57,10 +57,6 @@ import { formatDate } from '@/utils/dataTableFilters';
 // get the room store
 const roomReservationStore = useRoomReservationStore();
 const { roomReservations } = storeToRefs(roomReservationStore);
-
-// initialize the toast notifications
-const toast = useToast();
-const toastDuration = 5000;
 
 // create the reactive variables
 const loading = ref(false);
@@ -229,20 +225,15 @@ function setEvents() {
 async function approveRequest() {
   try {
     await roomReservationStore.approveRequest(selectedReservation.value);
-    toast.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: 'Reservation request approved',
-      life: toastDuration,
+    toast.success({
+      title: 'Success',
+      content: 'Reservation request approved',
     });
-    // await roomReservationStore.fetchAll();
     setEvents();
   } catch (err) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Failed to approve reservation request',
-      life: toastDuration,
+    toast.error({
+      title: 'Error',
+      content: 'Failed to approve reservation request',
     });
   }
   dialogVisible.value = false;
@@ -252,21 +243,17 @@ async function approveRequest() {
 async function denyRequest() {
   try {
     await roomReservationStore.denyRequest(selectedReservation.value);
-    toast.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: 'Reservation request denied',
-      life: toastDuration,
+    toast.info({
+      title: 'Success',
+      content: 'Reservation request denied',
     });
     dialogVisible.value = false;
     // await roomReservationStore.fetchAll();
     setEvents();
   } catch (err) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Failed to deny reservation request',
-      life: toastDuration,
+    toast.error({
+      title: 'Error',
+      content: 'Failed to deny reservation request',
     });
   }
 }

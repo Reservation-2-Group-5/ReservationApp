@@ -209,7 +209,7 @@ import AutoComplete from 'primevue/autocomplete';
 import Dialog from 'primevue/dialog';
 import Divider from 'primevue/divider';
 import Card from 'primevue/card';
-import { useToast } from 'primevue/usetoast';
+import toast from '@/utils/toastWrapper';
 import { storeToRefs } from 'pinia';
 import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
 import ProfileName from '@/components/inventory-list/ProfileName.vue';
@@ -230,10 +230,6 @@ const { inventory } = storeToRefs(inventoryStore);
 const deviceReservationStore = useDeviceReservationStore();
 const userStore = useUserStore();
 
-// initialize the toast notifications
-const toast = useToast();
-const toastDuration = 5000;
-
 // create the reactive variables
 const loading = ref(false);
 const selectedInventory = ref();
@@ -245,7 +241,7 @@ const fundingSources = ref([]);
 const departments = ref([]);
 
 const dialogVisible = ref(false);
-const dialogPosition = ref('top');
+const dialogPosition = ref('center');
 const reservationStartDate = ref();
 const reservationEndDate = ref();
 const reservationEndDateDisabled = ref(true);
@@ -316,41 +312,34 @@ function search(event) {
 // submit the selected row
 function submitSelection() {
   if (!selectedInventory.value?.length) {
-    toast.add({
-      severity: 'error',
-      summary: 'No items selected',
-      detail: 'Please select at least one item to submit',
-      life: toastDuration,
+    // toast.info(CustomToast, 'Select an item to submit');
+    toast.info({
+      title: 'No items selected',
+      content: 'Please select at least one item to submit',
     });
     return;
   }
   if (selectedInventory.value.length > 1) {
-    toast.add({
-      severity: 'warn',
-      summary: 'Multiple items selected',
-      detail: 'Only one item can be submitted at a time',
-      life: toastDuration,
+    toast.info({
+      title: 'Multiple items selected',
+      content: 'Only one item can be submitted at a time',
     });
     return;
   }
 
   // don't allow the user to submit request for an unavailable item
   if (selectedInventory.value[0].available.match(/(unavailable|pending)/)) {
-    toast.add({
-      severity: 'error',
-      summary: 'Item is unavailable',
-      detail: 'Please select an available item',
-      life: toastDuration,
+    toast.info({
+      title: 'Item is unavailable',
+      content: 'Please select an available item',
     });
     return;
   }
 
   if (!userStore.isLoggedIn) {
-    toast.add({
-      severity: 'error',
-      summary: 'Not logged in',
-      detail: 'Please log in to submit a reservation',
-      life: toastDuration,
+    toast.info({
+      title: 'Not logged in',
+      content: 'Please log in to submit a reservation',
     });
     return;
   }
@@ -376,29 +365,23 @@ function formatAssignedTo(name, netId) {
 // submit the reservation to the server
 async function submitReservation(closeFn) {
   if (!reservationStartDate.value || !reservationEndDate.value) {
-    toast.add({
-      severity: 'error',
-      summary: 'Invalid date',
-      detail: 'Please select a valid date',
-      life: toastDuration,
+    toast.error({
+      title: 'Invalid date',
+      content: 'Please select a start and end date',
     });
     return;
   }
   if (reservationStartDate.value > reservationEndDate.value) {
-    toast.add({
-      severity: 'error',
-      summary: 'Invalid date range',
-      detail: 'Please select a valid date range',
-      life: toastDuration,
+    toast.error({
+      title: 'Invalid date range',
+      content: 'Start date must be before end date',
     });
     return;
   }
   if (!userStore.isLoggedIn) {
-    toast.add({
-      severity: 'error',
-      summary: 'Not logged in',
-      detail: 'Please log in to submit a reservation',
-      life: toastDuration,
+    toast.info({
+      title: 'Not logged in',
+      content: 'Please log in to submit a reservation',
     });
     closeDialog(closeFn);
     return;
@@ -411,20 +394,16 @@ async function submitReservation(closeFn) {
       requestedStartDate: reservationStartDate.value,
       requestedEndDate: reservationEndDate.value,
     });
-    toast.add({
-      severity: 'success',
-      summary: 'Reservation submitted',
-      detail: `Your ${selectedInventory.value[0].name} reservation has been submitted for ${formatDate(reservationStartDate.value)} to ${formatDate(reservationEndDate.value)}}`,
-      life: toastDuration,
+    toast.success({
+      title: 'Reservation request submitted!',
+      content: `Your ${selectedInventory.value[0].name} reservation has been submitted for ${formatDate(reservationStartDate.value)} to ${formatDate(reservationEndDate.value)}`,
     });
     selectedInventory.value[0].available = 'unavailable';
     selectedInventory.value = [];
   } catch (err) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error submitting reservation',
-      detail: err.message,
-      life: toastDuration,
+    toast.error({
+      title: 'Error submitting reservation',
+      content: err.message,
     });
     console.error(err);
   }

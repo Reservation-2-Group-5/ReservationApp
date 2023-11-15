@@ -1,5 +1,4 @@
 <template>
-  <Toast />
   <div class="app">
     <NavBar class="navbar" />
     <main class="router">
@@ -12,7 +11,6 @@
 
 <script setup>
 import NavBar from '@/components/NavBar.vue';
-import Toast from 'primevue/toast';
 </script>
 
 <style scoped>
