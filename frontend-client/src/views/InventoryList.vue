@@ -256,10 +256,16 @@ onBeforeMount(() => {
 
 // set the color of the status tag
 function getSeverity(status) {
-  if (status === 'unavailable') {
-    return 'danger';
+  switch (status) {
+    case 'available':
+      return 'success';
+    case 'unavailable':
+      return 'danger';
+    case 'pending':
+      return 'warning';
+    default:
+      return 'info';
   }
-  return 'success';
 }
 
 // clear the selection when the user clicks the select all button
@@ -301,7 +307,7 @@ function submitSelection() {
   }
 
   // don't allow the user to submit request for an unavailable item
-  if (selectedInventory.value[0].available === 'unavailable') {
+  if (selectedInventory.value[0].available.match(/(unavailable|pending)/)) {
     toast.add({
       severity: 'error',
       summary: 'Item is unavailable',
