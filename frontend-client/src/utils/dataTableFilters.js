@@ -55,6 +55,14 @@ export function initFilters(filters, type) {
       operator: FilterOperator.OR,
       constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
     },
+    startDate: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
+    },
+    endDate: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_AFTER }],
+    },
   };
   if (type === 'room') {
     filters.value = {
@@ -118,14 +126,14 @@ export async function fetchData(store, loading, filterLists) {
 }
 
 // format the date to a readable format
-export function formatDate(date) {
+export function formatDate(date, time = false) {
   if (!date) return '';
   return date.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-    // hour: 'numeric',
-    // minute: 'numeric',
+    hour: (time) ? 'numeric' : undefined,
+    minute: (time) ? 'numeric' : undefined,
   });
 }
 
