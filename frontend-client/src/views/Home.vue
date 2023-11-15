@@ -156,7 +156,7 @@ hr {
 }
 
 .header-3 {
-  background: var(--darken-bg), url('Norton.jpeg') no-repeat center -150px;
+  background: var(--darken-bg), url('Norton.jpg') no-repeat center -150px;
 }
 
 .header-4 {
