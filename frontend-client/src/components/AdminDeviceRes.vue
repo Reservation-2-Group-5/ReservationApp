@@ -111,7 +111,9 @@
           <span class="p-column-title" v-tooltip.top="'Warranty Expiration'">Wrty Exp</span>
         </template>
         <template #body="{ data }">
-          {{ formatDate(data.warrantyExpiration) }}
+          <div v-tooltip.left="formatDate(data.warrantyExpiration, true)">
+            {{ formatDate(data.warrantyExpiration) }}
+          </div>
         </template>
         <template #filter="{ filterModel }">
           <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
@@ -137,7 +139,9 @@
           <span class="p-column-title" v-tooltip.top="'Requested On'">Req On</span>
         </template>
         <template #body="{ data }">
-          {{ formatDate(data.requestedOnDate) }}
+          <div v-tooltip.left="formatDate(data.requestedOnDate, true)">
+            {{ formatDate(data.requestedOnDate) }}
+          </div>
         </template>
         <template #filter="{ filterModel }">
           <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
@@ -148,7 +152,9 @@
           <span class="p-column-title" v-tooltip.top="'Requested Reservation Starting Date'">Res Start</span>
         </template>
         <template #body="{ data }">
-          {{ formatDate(data.requestedStartDate) }}
+          <div v-tooltip.left="formatDate(data.requestedStartDate, true)">
+            {{ formatDate(data.requestedStartDate) }}
+          </div>
         </template>
         <template #filter="{ filterModel }">
           <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
@@ -159,7 +165,9 @@
           <span class="p-column-title" v-tooltip.top="'Requested Reservation Ending Date'">Res End</span>
         </template>
         <template #body="{ data }">
-          {{ formatDate(data.requestedEndDate) }}
+          <div v-tooltip.left="formatDate(data.requestedEndDate, true)">
+            {{ formatDate(data.requestedEndDate) }}
+          </div>
         </template>
         <template #filter="{ filterModel }">
           <Calendar v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" showButtonBar selectionMode="single" showIcon :showOnFocus="false" />
@@ -172,7 +180,7 @@
         <template #body="{ data }">
           <div class="admin-btns">
             <Button
-              v-tooltip.left="{ value: 'Accept Request', class: 'custom-success', autoHide: false }"
+              v-tooltip.left="{ value: 'Approve Request', class: 'custom-success', autoHide: false }"
               type="button"
               icon="pi pi-check-square"
               severity="success"
@@ -209,7 +217,7 @@ import MultiSelect from 'primevue/multiselect';
 import Calendar from 'primevue/calendar';
 import { useDeviceReservationStore } from '@/store';
 import { storeToRefs } from 'pinia';
-import { useToast } from 'primevue/usetoast';
+import toast from '@/utils/toastWrapper';
 import HeaderPanel from '@/components/inventory-list/HeaderPanel.vue';
 import ProfileName from '@/components/inventory-list/ProfileName.vue';
 import {
@@ -225,10 +233,6 @@ const placeholderAvatar = 'https://images.placeholders.dev/?width=48&height=48';
 // setup the data stores
 const deviceReservationStore = useDeviceReservationStore();
 const { deviceReservations } = storeToRefs(deviceReservationStore);
-
-// initialize the toast notifications
-const toast = useToast();
-const toastDuration = 5000;
 
 // create the reactive variables
 const loading = ref(false);
@@ -277,18 +281,14 @@ function search(event) {
 async function approveRequest(reservation) {
   try {
     await deviceReservationStore.approveRequest(reservation);
-    toast.add({
-      severity: 'success',
-      summary: 'Reservation Approved',
-      detail: `${reservation.requestedBy}'s ${reservation.name} request has been approved.`,
-      life: toastDuration,
+    toast.success({
+      title: 'Reservation Approved',
+      content: `${reservation.requestedBy}'s ${reservation.name} request has been approved.`,
     });
   } catch (err) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: `There was an error approving ${reservation.requestedBy}'s ${reservation.name} request.`,
-      life: toastDuration,
+    toast.error({
+      title: 'Error',
+      content: `There was an error approving ${reservation.requestedBy}'s ${reservation.name} request.`,
     });
   }
 }
@@ -296,18 +296,14 @@ async function approveRequest(reservation) {
 async function denyRequest(reservation) {
   try {
     await deviceReservationStore.denyRequest(reservation);
-    toast.add({
-      severity: 'warn',
-      summary: 'Reservation Denied',
-      detail: `${reservation.requestedBy}'s ${reservation.name} request has been denied.`,
-      life: toastDuration,
+    toast.info({
+      title: 'Reservation Denied',
+      content: `${reservation.requestedBy}'s ${reservation.name} request has been denied.`,
     });
   } catch (err) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: `There was an error denying ${reservation.requestedBy}'s ${reservation.name} request.`,
-      life: toastDuration,
+    toast.error({
+      title: 'Error',
+      content: `There was an error denying ${reservation.requestedBy}'s ${reservation.name} request.`,
     });
   }
 }

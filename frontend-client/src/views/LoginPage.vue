@@ -14,9 +14,7 @@ import { onMounted } from 'vue';
 import { useUserStore } from '@/store';
 import { useRouter } from 'vue-router';
 import Card from 'primevue/card';
-import { useToast } from 'primevue/usetoast';
-
-const toast = useToast();
+import toast from '@/utils/toastWrapper';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -28,11 +26,9 @@ onMounted(async () => {
     console.log('Logged in:', userStore.user);
   } catch (e) {
     console.error(e);
-    toast.add({
-      severity: 'error',
-      summary: 'Login failed',
-      detail: e.message,
-      life: 5000,
+    toast.error({
+      title: 'Login failed',
+      content: e.message,
     });
   }
 

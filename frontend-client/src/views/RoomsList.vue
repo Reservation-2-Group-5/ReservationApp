@@ -98,7 +98,7 @@ import Dialog from 'primevue/dialog';
 import Card from 'primevue/card';
 import Divider from 'primevue/divider';
 import Calendar from 'primevue/calendar';
-import { useToast } from 'primevue/usetoast';
+import toast from '@/utils/toastWrapper';
 import { useRoomStore, useUserStore, useRoomReservationStore } from '@/store';
 import { storeToRefs } from 'pinia';
 
@@ -111,10 +111,6 @@ const roomStore = useRoomStore();
 const { rooms } = storeToRefs(roomStore);
 const userStore = useUserStore();
 const roomReservationStore = useRoomReservationStore();
-
-// initialize the toast notifications
-const toast = useToast();
-const toastDuration = 5000;
 
 // create the reactive variables
 const loading = ref(false);
@@ -206,29 +202,26 @@ function clearSelection() {
 
 async function handleSubmit() {
   if (!selectedStartDate.value || !selectedEndDate.value) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Please select a start and end date.',
-      life: toastDuration,
+    toast.error({
+      title: 'Invalid date',
+      content: 'Please select a start and end date',
+      position: 'bottom-center',
     });
     return false;
   }
   if (selectedStartDate.value >= selectedEndDate.value) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Start date must be before end date.',
-      life: toastDuration,
+    toast.error({
+      title: 'Invalid date range',
+      content: 'Start date must be before end date',
+      position: 'bottom-center',
     });
     return false;
   }
   if (selectedStartDate.value.toLocaleDateString() !== selectedEndDate.value.toLocaleDateString()) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Start date and end date must be on the same day.',
-      life: toastDuration,
+    toast.error({
+      title: 'Invalid date range',
+      content: 'Start date and end date must be on the same day',
+      position: 'bottom-center',
     });
     return false;
   }
@@ -248,11 +241,10 @@ async function handleSubmit() {
   // ensure that the room is available for the selected time blocks
   const unavailableEntries = roomEntries.filter((r) => r.available !== 'available');
   if (unavailableEntries.length > 0) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: `${building} - ${room} is unavailable at the selected time.`,
-      life: toastDuration,
+    toast.error({
+      title: 'Unavailable',
+      content: `Your time selection overlaps an existing reservation for ${building} - ${room}`,
+      position: 'bottom-center',
     });
     return false;
   }
@@ -264,11 +256,10 @@ async function handleSubmit() {
   // if there are no room entries, then the user is trying to request too far in advance
   // the db hasn't seeded any room entries more than 30 days in advance
   if (roomEntries.length === 0) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'You cannot reserve a room more than 30 days in advance.',
-      life: toastDuration,
+    toast.error({
+      title: 'Invalid date range',
+      content: 'You cannot reserve a room more than 30 days in advance',
+      position: 'bottom-center',
     });
     return false;
   }
@@ -301,21 +292,18 @@ async function handleSubmit() {
     // add the events to the calendar
     calendar.value.getApi().addEventSource(tempEvents);
 
-    toast.add({
-      severity: 'success',
-      summary: 'Submitted Reservation Request',
-      detail: `${building} - ${room} requested for ${start} from ${startTimeStr} to ${endTimeStr}.`,
-      life: toastDuration,
+    toast.success({
+      title: 'Submitted Reservation Request!',
+      content: `${building} - ${room} requested for ${start} from ${startTimeStr} to ${endTimeStr}.`,
     });
     return true;
   } catch (error) {
-    console.error(error);
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message,
-      life: toastDuration,
+    toast.error({
+      title: 'Error',
+      content: 'Failed to submit reservation request',
+      position: 'bottom-center',
     });
+    console.error(error);
     return false;
   }
 }
@@ -328,8 +316,8 @@ function closeDialog(closeFn) {
 }
 
 // submit the reservation
-function submitReservation(closeFn) {
-  const close = handleSubmit();
+async function submitReservation(closeFn) {
+  const close = await handleSubmit();
   if (close) {
     closeDialog(closeFn);
   }
@@ -339,11 +327,9 @@ function handleSelect(selectionInfo) {
   if (selectionInfo.startStr === selectedStartDate.value) {
     clearSelection();
   } else if (!userStore.isLoggedIn) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'You must be logged in to reserve a room.',
-      life: toastDuration,
+    toast.error({
+      title: 'Error',
+      content: 'You must be logged in to reserve a room.',
     });
     clearSelection();
   } else {
@@ -377,18 +363,17 @@ const calendarOptions = reactive({
   },
   eventClick: (clickInfo) => {
     // prevent click if event is not available
-    if (clickInfo.event.backgroundColor === unavailableColor) {
+    if (clickInfo.event.display === 'background') {
       clickInfo.jsEvent.preventDefault();
       clickInfo.jsEvent.stopPropagation();
       // send toast notification
       const [building, room] = selectedRoom.value.value.split(';');
       const time = clickInfo.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const date = clickInfo.event.start.toLocaleDateString();
-      toast.add({
-        severity: 'error',
-        summary: 'Unavailable',
-        detail: `${building} - ${room} is unavailable at ${time} on ${date}.`,
-        life: toastDuration,
+      toast.error({
+        title: 'Unavailable',
+        content: `${building} - ${room} is unavailable at ${time} on ${date}.`,
+        position: 'bottom-center',
       });
     }
   },
@@ -421,12 +406,11 @@ onMounted(async () => {
       }),
     }));
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message,
-      life: toastDuration,
+    toast.error({
+      title: 'Error',
+      content: 'Failed to fetch rooms',
     });
+    console.error(error);
   } finally {
     loading.value = false;
     // get the width from bounding rect of the dropdown
