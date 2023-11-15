@@ -2,13 +2,13 @@ import '@/assets/reset.css';
 import '@/assets/main.css';
 import 'primevue/resources/themes/bootstrap4-dark-blue/theme.css';
 import 'primeicons/primeicons.css';
-import "vue-toastification/dist/index.css";
+import 'vue-toastification/dist/index.css';
 
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import PrimeVue from 'primevue/config';
 import Tooltip from 'primevue/tooltip';
-import Toast from "vue-toastification";
+import Toast from 'vue-toastification';
 import router from '@/router';
 import App from '@/App.vue';
 
