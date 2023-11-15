@@ -17,17 +17,14 @@ namespace ReservationApp.Services
 
         public async Task<IEnumerable<RoomRes>> GetAllRoomReservationsAsync()
         {
-            return await _context.RoomReservations.ToListAsync();
+            return await _context.Room_Res.ToListAsync();
         }
 
-        public async Task<RoomRes> GetRoomReservationByIdAsync(int id)
-        {
-            return await _context.RoomReservations.FindAsync(id);
-        }
+        
 
         public async Task<RoomRes> CreateRoomReservationAsync(RoomRes roomRes)
         {
-            _context.RoomReservations.Add(roomRes);
+            _context.Room_Res.Add(roomRes);
             await _context.SaveChangesAsync();
             return roomRes;
         }
@@ -40,10 +37,10 @@ namespace ReservationApp.Services
 
         public async Task DeleteRoomReservationAsync(int id)
         {
-            var roomRes = await _context.RoomReservations.FindAsync(id);
+            var roomRes = await _context.Room_Res.FindAsync(id);
             if (roomRes != null)
             {
-                _context.RoomReservations.Remove(roomRes);
+                _context.Room_Res.Remove(roomRes);
                 await _context.SaveChangesAsync();
             }
         }
@@ -69,6 +66,11 @@ namespace ReservationApp.Services
         }
 
         public Task<RoomResController> SubmitAsync(RoomReservationDto roomReservationDto)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<RoomRes> GetRoomReservationByIdAsync(int id)
         {
             throw new NotImplementedException();
         }

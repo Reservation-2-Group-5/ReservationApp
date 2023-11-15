@@ -1,7 +1,7 @@
 using Reservation.Controllers;
 using ReservationApp.Models;
 using System.Collections.Generic;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace ReservationApp.Services
@@ -38,7 +38,7 @@ namespace ReservationApp.Services
 
         public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
-            return await _context.Users.ToListAsync();
+            return await _context.User.ToListAsync();
         }
 
         public Task GetAsync(object netID)
@@ -51,9 +51,9 @@ namespace ReservationApp.Services
             throw new NotImplementedException();
         }
 
-        public async Task<User> GetUserByNetIDAsync(long netId)
+        public Task<User> GetUserByNetIDAsync(long NetID)
         {
-            return await _context.Users.FindAsync(netId);
+            throw new NotImplementedException();
         }
 
         public Task UpdateUserAsync(User user)

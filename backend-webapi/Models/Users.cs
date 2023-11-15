@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations; //Should be good but need to check schema
+﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System.ComponentModel.DataAnnotations; //Should be good but need to check schema
 
 namespace ReservationApp.Models
 {
@@ -9,13 +10,14 @@ namespace ReservationApp.Models
 
         [Required]
         [StringLength(100)]
-        public string Name { get; set; }
+        public required string Name { get; set; }
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
-        public bool IsFaculty { get; set; }
-        public bool IsStudent { get; set; }
+        public bool Is_Faculty { get; set; }
+        public bool Is_Student { get; set; }
+        public bool Is_Admin { get; set; }
     }
 }

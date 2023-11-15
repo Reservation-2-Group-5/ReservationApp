@@ -9,11 +9,11 @@ public class AppDbContext : DbContext
     }
 
     // DbSet properties for models/entities
-    public DbSet<User> Users { get; set; }
-    public DbSet<Device> Devices { get; set; }
-    public DbSet<DeviceRes> DeviceReservations { get; set; }
-    public DbSet<Room> Rooms { get; set; }
-    public DbSet<RoomRes> RoomReservations { get; set; }
+    public DbSet<User> User { get; set; }
+    public DbSet<Device> Device { get; set; }
+    public DbSet<DeviceRes> Device_Res { get; set; }
+    public DbSet<Room> Room { get; set; }
+    public DbSet<RoomRes> Room_Res { get; set; }
     
 
     

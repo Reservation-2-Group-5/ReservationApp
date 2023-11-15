@@ -20,7 +20,9 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
     {
         var users = await _userService.GetAllUsersAsync();
+        
         return Ok(users);
+        
     }
 
     // GET /api/v1/users/:NetID

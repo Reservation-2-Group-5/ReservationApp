@@ -9,23 +9,25 @@ namespace ReservationApp.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        public int id { get; set; }
 
         
         public long NetID { get; set; }
-        public int DeviceTag { get; set; }
+        public int Tag { get; set; }
 
         [Required]
-        public DateTime RequestDate { get; set; }
+        public DateTime Request_Date { get; set; }
 
         [Required]
-        public DateTime StartDate { get; set; }
+        public DateTime Start_Date { get; set; }
 
         [Required]
-        public DateTime EndDate { get; set; }
+        public DateTime End_Date { get; set; }
 
-        public virtual User User { get; set; }
        
-        public virtual Device Device { get; set; }
+
+        public virtual required User User { get; set; }
+       
+        public virtual required Device Device { get; set; }
     }
 }

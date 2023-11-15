@@ -9,20 +9,21 @@ namespace ReservationApp.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long NetID { get; set; }
+        public int id { get; set; }
 
         [Required]
-        public long Building { get; set; } // Assuming this corresponds to a Building ID
+        public required string Building { get; set; } // Assuming this corresponds to a Building ID
 
         [Required]
-        public long Room { get; set; } // Assuming this corresponds to a Room ID
+        public required string RoomNumber { get; set; } // Assuming this corresponds to a Room ID
 
         [Required]
-        public DateTime RequestDate { get; set; }
+        public DateOnly Request_Date { get; set; }
 
         [Required]
-        public DateTime StartDate { get; set; }
+        public int Time {  get; set; }
 
         [Required]
-        public DateTime EndDate { get; set; }
+        public DateOnly Date { get; set; }
     }
 }

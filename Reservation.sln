@@ -7,6 +7,11 @@ Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "frontend-client", "frontend
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "backend-webapi", "backend-webapi\backend-webapi.csproj", "{AABA7908-0388-41A0-A679-B6B90B7317DF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CD53B990-6C2B-4004-9AA5-AA3DAF2375B9}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\Downloads\dev.sqlite3 = ..\..\..\..\Downloads\dev.sqlite3
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

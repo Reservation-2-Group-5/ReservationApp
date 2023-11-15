@@ -10,11 +10,14 @@ using Google.Protobuf.WellKnownTypes; //Will this work?
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(opts => opts.JsonSerializerOptions.PropertyNamingPolicy = null);
 
 
 
-builder.Services.AddCors(options =>
+
+
+
+    builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowOrigin", builder =>
     {
@@ -38,7 +41,7 @@ builder.Services.AddSwaggerGen();
 
 
 
-var dbPath = Path.Combine(builder.Environment.ContentRootPath, "dev.sqlite3");
+var dbPath = "dev(1).sqlite3"; 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite($"Data Source={dbPath}"));
 

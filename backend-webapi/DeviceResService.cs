@@ -16,17 +16,17 @@ namespace ReservationApp.Services
 
         public async Task<IEnumerable<DeviceRes>> GetAllDeviceReservationsAsync()
         {
-            return await _context.DeviceReservations.ToListAsync();
+            return await _context.Device_Res.ToListAsync();
         }
 
         public async Task<DeviceRes> GetDeviceReservationByIdAsync(int id)
         {
-            return await _context.DeviceReservations.FindAsync(id);
+            return await _context.Device_Res.FindAsync(id);
         }
 
         public async Task<DeviceRes> CreateDeviceReservationAsync(DeviceRes deviceRes)
         {
-            _context.DeviceReservations.Add(deviceRes);
+            _context.Device_Res.Add(deviceRes);
             await _context.SaveChangesAsync();
             return deviceRes;
         }
@@ -39,10 +39,10 @@ namespace ReservationApp.Services
 
         public async Task DeleteDeviceReservationAsync(int id)
         {
-            var deviceRes = await _context.DeviceReservations.FindAsync(id);
+            var deviceRes = await _context.Device_Res.FindAsync(id);
             if (deviceRes != null)
             {
-                _context.DeviceReservations.Remove(deviceRes);
+                _context.Device_Res.Remove(deviceRes);
                 await _context.SaveChangesAsync();
             }
         }

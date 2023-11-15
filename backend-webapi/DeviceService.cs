@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Reservation.Models;
 using ReservationApp.Models;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks; //Should be good
 
@@ -17,17 +18,17 @@ namespace ReservationApp.Services
 
         public async Task<IEnumerable<Device>> GetAllDevicesAsync()
         {
-            return await _context.Devices.ToListAsync();
+            return await _context.Device.ToListAsync();
         }
 
         public async Task<Device> GetDeviceByTagAsync(int tag)
         {
-            return await _context.Devices.FirstOrDefaultAsync(d => d.Tag == tag);
+            return await _context.Device.FirstOrDefaultAsync(d => d.Tag == tag);
         }
 
         public async Task<Device> CreateDeviceAsync(Device device)
         {
-            _context.Devices.Add(device);
+            _context.Device.Add(device);
             await _context.SaveChangesAsync();
             return device;
         }
@@ -54,17 +55,17 @@ namespace ReservationApp.Services
 
         public async Task DeleteDeviceAsync(int tag)
         {
-            var device = await _context.Devices.FindAsync(tag);
+            var device = await _context.Device.FindAsync(tag);
             if (device != null)
             {
-                _context.Devices.Remove(device);
+                _context.Device.Remove(device);
                 await _context.SaveChangesAsync();
             }
         }
 
         private bool DeviceExists(int tag)
         {
-            return _context.Devices.Any(e => e.Tag == tag);
+            return _context.Device.Any(e => e.Tag == tag);
         }
     }
 }
