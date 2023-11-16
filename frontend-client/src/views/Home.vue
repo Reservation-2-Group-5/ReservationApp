@@ -7,7 +7,7 @@
       <div class="outer">
         <div class="inner">
           <div class="header header-1">
-            <h3 id="demotext" ref="head">Login to Access Inventory Reservations and Room Bookings</h3>
+            <h3 ref="head">Login to Access Inventory Reservations<br /> and Room Bookings</h3>
           </div>
           <div class="content">
             <p>
@@ -115,6 +115,7 @@ a:hover {
 .outer {
   overflow-y: scroll;
   height: calc(100vh - 15rem);
+  padding: 0 2rem;
 }
 
 .inner {
@@ -141,10 +142,27 @@ hr {
   font-size: 1.2rem;
   padding: 0 2rem;
   font-family: 'Roboto', sans-serif;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  height: 100%;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
-.inner:first-child>.content p:first-child {
+.inner>.content p:first-child {
   margin-top: 0;
+}
+
+.inner:last-child>.content p:last-child {
+  align-self: flex-start;
+}
+
+.inner:last-child>.content {
+  padding: 1rem 2rem;
+  text-align: left;
 }
 
 .header-1 {
@@ -156,7 +174,7 @@ hr {
 }
 
 .header-3 {
-  background: var(--darken-bg), url('Norton.jpg') no-repeat center -150px;
+  background: var(--darken-bg), url('Norton.jpg') no-repeat center center;
 }
 
 .header-4 {
@@ -184,5 +202,6 @@ hr {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 20px;
   box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+  line-height: 1.3;
 }
 </style>
