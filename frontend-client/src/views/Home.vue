@@ -7,7 +7,9 @@
       <div class="outer">
         <div class="inner">
           <div class="header header-1">
-            <h3 id="demotext" ref="head">Login to Access Inventory Reservations and Room Bookings</h3>
+            <h3 ref="head">
+              Login to Access Inventory Reservations<wbr /><span class="nowrap"> and Room Bookings</span>
+            </h3>
           </div>
           <div class="content">
             <p>
@@ -115,6 +117,7 @@ a:hover {
 .outer {
   overflow-y: scroll;
   height: calc(100vh - 15rem);
+  padding: 0 2rem;
 }
 
 .inner {
@@ -122,13 +125,23 @@ a:hover {
   grid-template-columns: 1fr 1fr;
   grid-column-gap: 4rem;
   grid-row-gap: 2rem;
-  margin-bottom: 2rem;
   place-items: center;
   line-height: 1.8rem;
 }
 
 li {
   margin-bottom: 1rem;
+  list-style-position: inside;
+}
+
+ol li {
+  text-indent: -1.4rem;
+  padding-left: 1.4rem;
+}
+
+ul li {
+  text-indent: -1.7rem;
+  padding-left: 1.7rem;
 }
 
 hr {
@@ -141,10 +154,32 @@ hr {
   font-size: 1.2rem;
   padding: 0 2rem;
   font-family: 'Roboto', sans-serif;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  height: 100%;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
-.inner:first-child>.content p:first-child {
+.inner>.content p:first-child {
   margin-top: 0;
+}
+
+.inner:last-child>.content p:last-child {
+  align-self: flex-start;
+}
+
+.inner>.content li:last-child {
+  margin-bottom: 0;
+}
+
+.inner:last-child>.content,
+.inner:first-child>.content {
+  padding: 1rem 2rem;
+  text-align: left;
 }
 
 .header-1 {
@@ -156,7 +191,7 @@ hr {
 }
 
 .header-3 {
-  background: var(--darken-bg), url('Norton.jpg') no-repeat center -150px;
+  background: var(--darken-bg), url('Norton.jpg') no-repeat center center;
 }
 
 .header-4 {
@@ -170,6 +205,7 @@ hr {
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 20px;
 }
 
 .inner h3 {
@@ -184,5 +220,16 @@ hr {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 20px;
   box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+  line-height: 1.3;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+@media (max-width: 1020px) {
+  .nowrap {
+    white-space: normal;
+  }
 }
 </style>

@@ -36,23 +36,19 @@ const useUserStore = defineStore('user', () => {
   const isAdmin = computed(() => user.value?.isAdmin);
 
   async function fetchUsers() {
-    try {
-      // Check if /api is accessible
-      // const useApi = await apiAccessible();
-      // // console.log('useApi', useApi);
-      // if (!useApi) return; // don't fetch if api is not accessible
+    // Check if /api is accessible
+    // const useApi = await apiAccessible();
+    // // console.log('useApi', useApi);
+    // if (!useApi) return; // don't fetch if api is not accessible
 
-      const response = await fetch(API);
-      console.log('users response', response);
-      if (response.status === 500) {
-        throw new Error('Error fetching users');
-      }
-      const json = await response.json();
-      console.log('users json', json);
-      setUsers(json);
-    } catch (err) {
-      throw new Error(err);
+    const response = await fetch(API);
+    console.log('users response', response);
+    if (response.status === 500) {
+      throw new Error('Error fetching users');
     }
+    const json = await response.json();
+    console.log('users json', json);
+    setUsers(json);
   }
 
   // TODO: implement once we have netid system
