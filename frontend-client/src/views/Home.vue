@@ -125,13 +125,23 @@ a:hover {
   grid-template-columns: 1fr 1fr;
   grid-column-gap: 4rem;
   grid-row-gap: 2rem;
-  margin-bottom: 2rem;
   place-items: center;
   line-height: 1.8rem;
 }
 
 li {
   margin-bottom: 1rem;
+  list-style-position: inside;
+}
+
+ol li {
+  text-indent: -1.4rem;
+  padding-left: 1.4rem;
+}
+
+ul li {
+  text-indent: -1.7rem;
+  padding-left: 1.7rem;
 }
 
 hr {
@@ -195,6 +205,7 @@ hr {
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 20px;
 }
 
 .inner h3 {
