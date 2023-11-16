@@ -36,7 +36,7 @@
   color: #fff;
 }
 
-/* .custom-success .p-tooltip-text,
+.custom-success .p-tooltip-text,
 .custom-error .p-tooltip-text {
   color: #151515;
   padding: 0.2rem 0.5rem;
@@ -50,7 +50,7 @@
 .custom-error .p-tooltip-text {
   background: #f7c1c1;
   border: 1px solid #f18e8e;
-} */
+}
 
 .Vue-Toastification__toast--error.toast-error {
   background: #f7c1c1;
