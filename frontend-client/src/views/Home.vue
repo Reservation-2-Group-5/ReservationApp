@@ -160,6 +160,10 @@ hr {
   align-self: flex-start;
 }
 
+.inner>.content li:last-child {
+  margin-bottom: 0;
+}
+
 .inner:last-child>.content {
   padding: 1rem 2rem;
   text-align: left;
