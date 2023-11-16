@@ -19,6 +19,7 @@ module.exports = {
         'Home',
       ],
     }],
+    'linebreak-style': 'off',
     'vuejs-accessibility/click-events-have-key-events': 'off',
     'no-param-reassign': ['error', { props: false }],
     'no-restricted-syntax': ['error', {

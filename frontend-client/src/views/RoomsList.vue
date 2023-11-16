@@ -11,7 +11,7 @@
       <FullCalendar :options="calendarOptions" ref="calendar" />
     </div>
   </div>
-  <Dialog v-model:visible="dialogVisible" :position="dialogPosition" modal header="Header" :style="{ width: '50vw' }">
+  <Dialog v-model:visible="dialogVisible" :position="dialogPosition" modal :style="{ width: '50vw' }">
     <template #container="slotProps">
       <Card class="card">
         <template #title>
@@ -19,18 +19,20 @@
           <Divider />
         </template>
         <template #content>
+          <div class="dialog-details">
+            <h1>{{ formatDate(selectedDay) }}</h1>
+          </div>
           <div class="dialog-date-selections">
             <span class="p-float-label">
               <Calendar
                 v-model="selectedStartDate"
                 inputId="reservation-start-date"
-                showTime
+                timeOnly
                 hourFormat="12"
                 selectionMode="single"
                 :stepMinute="60"
                 showIcon
                 hideOnDateTimeSelect
-                showButtonBar
                 timeSeparator=""
                 @update:modelValue="disallowMinutes"
                 :pt="{
@@ -43,7 +45,7 @@
               <Calendar
                 v-model="selectedEndDate"
                 inputId="reservation-end-date"
-                showTime
+                timeOnly
                 hourFormat="12"
                 :minDate="minEndDate"
                 selectionMode="single"
@@ -51,7 +53,6 @@
                 showIcon
                 :disabled="reservationEndDateDisabled"
                 hideOnDateTimeSelect
-                showButtonBar
                 timeSeparator=""
                 @update:modelValue="disallowMinutes"
                 :pt="{
@@ -62,7 +63,6 @@
             </span>
           </div>
           <div class="dialog-details">
-            <h1>{{ selectedRoom.value.split(";").join(" - ") }}</h1>
             <div class="dialog-details-inner">
               <p><span class="bold">Building:</span> {{ selectedRoom.value.split(";")[0] }}</p>
               <p><span class="bold">Room:</span> {{ selectedRoom.value.split(";")[1] }}</p>
@@ -99,6 +99,7 @@ import Card from 'primevue/card';
 import Divider from 'primevue/divider';
 import Calendar from 'primevue/calendar';
 import toast from '@/utils/toastWrapper';
+import { formatDate } from '@/utils/dataTableFilters';
 import { useRoomStore, useUserStore, useRoomReservationStore } from '@/store';
 import { storeToRefs } from 'pinia';
 
@@ -122,6 +123,7 @@ const selectedRoomType = ref(null);
 const groupedRooms = ref([]);
 const padder = ref(null);
 const dropdown = ref(null);
+const selectedDay = ref(null);
 const selectedStartDate = ref(null);
 const selectedEndDate = ref(null);
 
@@ -196,6 +198,7 @@ const roomsByBuilding = computed(() => {
 function clearSelection() {
   // clear the selection
   calendar.value.getApi().unselect();
+  selectedDay.value = null;
   selectedStartDate.value = null;
   selectedEndDate.value = null;
 }
@@ -333,6 +336,7 @@ function handleSelect(selectionInfo) {
     });
     clearSelection();
   } else {
+    selectedDay.value = selectionInfo.start;
     selectedStartDate.value = selectionInfo.start;
     selectedEndDate.value = selectionInfo.end;
     dialogVisible.value = true;
@@ -489,6 +493,11 @@ onMounted(async () => {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--text-color);
+  margin-bottom: 2rem;
+}
+
+:deep(.p-card-content) {
+  padding: 0;
 }
 
 :deep(.dialog-details img) {
