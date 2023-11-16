@@ -39,7 +39,7 @@ function generateUserList() {
  * @param {Array} users - An array of user objects.
  * @returns {Array<Object>} An array of device objects.
  */
-function generateDeviceList(users) {
+async function generateDeviceList(knex, users) {
   const deviceList = [];
   const categories = ['Laptop', 'Desktop', 'Monitor', 'Keyboard', 'Mouse', 'Printer', 'Scanner', 'Projector', 'Other'];
   const departments = [
@@ -97,6 +97,19 @@ function generateDeviceList(users) {
 
     warrantyEXP.setTime(randomTime);
 
+    // Generate random dates from last week until 30 days from now
+    const start = new Date();
+    const end = new Date();
+    start.setDate(start.getDate() - 7);
+    end.setDate(end.getDate() + 30);
+
+    const startDate = new Date(
+      start.getTime() + Math.random() * (end.getTime() - start.getTime()),
+    );
+    const endDate = new Date(
+      startDate.getTime() + Math.random() * (end.getTime() - startDate.getTime()),
+    );
+
     const tag = `P${tagFormat.format(i)}`;
     const randomCategory = categories[Math.floor(Math.random() * categories.length)];
     const randomLocation = locations[Math.floor(Math.random() * locations.length)];
@@ -116,9 +129,21 @@ function generateDeviceList(users) {
       PO: poFormat.format(i),
       Warranty_EXP: warrantyEXP,
       Available: !assignedTo?.Name,
+      Start_Date: (assignedTo) ? startDate : null,
+      End_Date: (assignedTo) ? endDate : null,
     });
   }
-  return deviceList;
+  const columnInfo = await knex('yourTableName').columnInfo();
+  if ('Start_Date' in columnInfo && 'End_Date' in columnInfo) {
+    // Insert data with start_date and end_date
+    return deviceList;
+  }
+  // Insert data without start_date and end_date
+  const modifiedDeviceList = deviceList.map((device) => {
+    const { Start_Date, End_Date, ...rest } = device;
+    return rest;
+  });
+  return modifiedDeviceList;
 }
 
 /**
@@ -333,7 +358,7 @@ exports.seed = async (knex) => {
   }
 
   const users = generateUserList();
-  const devices = generateDeviceList(users);
+  const devices = await generateDeviceList(knex, users);
   const rooms = generateRoomList(users);
   const deviceReservations = generateDeviceReservations(users, devices);
   const roomReservations = generateRoomReservations(users, rooms);
