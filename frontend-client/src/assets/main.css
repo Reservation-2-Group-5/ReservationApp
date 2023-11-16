@@ -112,3 +112,7 @@
 .Vue-Toastification__toast .container h3 {
   margin-top: 0;
 }
+
+.Vue-Toastification__toast {
+  user-select: none;
+}
