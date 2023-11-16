@@ -21,7 +21,7 @@ function getPosition(position) {
       position,
     };
   }
-  return null;
+  return {};
 }
 
 function success(args) {
@@ -29,7 +29,10 @@ function success(args) {
   toast.success({
     component: CustomToast,
     props,
-  }, getPosition(props.position));
+  }, {
+    toastClassName: 'toast-success',
+    ...getPosition(props.position),
+  });
 }
 
 function info(args) {
@@ -37,7 +40,10 @@ function info(args) {
   toast.info({
     component: CustomToast,
     props,
-  }, getPosition(props.position));
+  }, {
+    toastClassName: 'toast-info',
+    ...getPosition(props.position),
+  });
 }
 
 function error(args) {
@@ -45,7 +51,10 @@ function error(args) {
   toast.error({
     component: CustomToast,
     props,
-  }, getPosition(props.position));
+  }, {
+    toastClassName: 'toast-error',
+    ...getPosition(props.position),
+  });
 }
 
 export default {

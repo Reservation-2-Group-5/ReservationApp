@@ -36,7 +36,7 @@
   color: #fff;
 }
 
-.custom-success .p-tooltip-text,
+/* .custom-success .p-tooltip-text,
 .custom-error .p-tooltip-text {
   color: #151515;
   padding: 0.2rem 0.5rem;
@@ -50,4 +50,61 @@
 .custom-error .p-tooltip-text {
   background: #f7c1c1;
   border: 1px solid #f18e8e;
+} */
+
+.Vue-Toastification__toast--error.toast-error {
+  background: #f7c1c1;
+  color: #8e2e2e;
+  border: 1px solid #f18e8e;
+}
+
+.Vue-Toastification__toast--error .Vue-Toastification__progress-bar {
+  background: #8e2e2e;
+}
+
+.Vue-Toastification__toast--error .Vue-Toastification__close-button {
+  color: #8e2e2e;
+}
+
+.Vue-Toastification__toast--success.toast-success {
+  background: #9fdaa8;
+  color: #285333;
+  border: 1px solid #78cc86;
+}
+
+.Vue-Toastification__toast--success .Vue-Toastification__progress-bar {
+  background: #285333;
+}
+
+.Vue-Toastification__toast--success .Vue-Toastification__close-button {
+  color: #285333;
+}
+
+.Vue-Toastification__toast--info.toast-info {
+  background: #c1d7f7;
+  color: #2e3a8e;
+  border: 1px solid #8e9cf1;
+  font-size: 1rem;
+}
+
+.Vue-Toastification__toast--info .Vue-Toastification__progress-bar {
+  background: #2e3a8e;
+}
+
+.Vue-Toastification__toast--info .Vue-Toastification__close-button {
+  color: #2e3a8e;
+}
+
+.Vue-Toastification__toast--warning.toast-warning {
+  background: #f7e3c1;
+  color: #8e6c2e;
+  border: 1px solid #f1c88e;
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__progress-bar {
+  background: #8e6c2e;
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__close-button {
+  color: #8e6c2e;
 }
