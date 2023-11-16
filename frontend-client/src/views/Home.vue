@@ -7,7 +7,9 @@
       <div class="outer">
         <div class="inner">
           <div class="header header-1">
-            <h3 ref="head">Login to Access Inventory Reservations<br /> and Room Bookings</h3>
+            <h3 ref="head">
+              Login to Access Inventory Reservations<wbr /><span class="nowrap"> and Room Bookings</span>
+            </h3>
           </div>
           <div class="content">
             <p>
@@ -164,7 +166,8 @@ hr {
   margin-bottom: 0;
 }
 
-.inner:last-child>.content {
+.inner:last-child>.content,
+.inner:first-child>.content {
   padding: 1rem 2rem;
   text-align: left;
 }
@@ -207,5 +210,15 @@ hr {
   border-radius: 20px;
   box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
   line-height: 1.3;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+@media (max-width: 1020px) {
+  .nowrap {
+    white-space: normal;
+  }
 }
 </style>
