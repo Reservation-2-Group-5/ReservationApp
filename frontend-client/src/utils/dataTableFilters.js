@@ -13,7 +13,7 @@ export function initFilters(filters, type) {
     },
     assignedTo: {
       operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
     },
     netId: {
       operator: FilterOperator.AND,
@@ -21,7 +21,7 @@ export function initFilters(filters, type) {
     },
     location: {
       operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
     },
     warrantyExpiration: {
       operator: FilterOperator.AND,
@@ -33,7 +33,7 @@ export function initFilters(filters, type) {
     },
     requestedBy: {
       operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
     },
     requestedOnDate: {
       operator: FilterOperator.AND,
@@ -49,11 +49,11 @@ export function initFilters(filters, type) {
     },
     fundingSource: {
       operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
     },
     department: {
       operator: FilterOperator.OR,
-      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      constraints: [{ value: null, matchMode: FilterMatchMode.IN }],
     },
     startDate: {
       operator: FilterOperator.AND,
