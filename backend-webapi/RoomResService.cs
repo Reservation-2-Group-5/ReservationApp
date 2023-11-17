@@ -55,7 +55,7 @@ namespace ReservationApp.Services
             throw new NotImplementedException();
         }
 
-        public Task<RoomResController> GetAsync(int id)
+        public Task<RoomResController> GetUserByNetIDAsync(int id)
         {
             throw new NotImplementedException();
         }

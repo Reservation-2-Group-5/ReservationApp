@@ -48,7 +48,7 @@ namespace Reservation.Controllers //Need to fix this one
             try
             {
                 var roomReservation = await _roomResService.SubmitAsync(roomReservationDto);
-                var user = await _userService.GetAsync(roomReservationDto.NetID);
+                var user = await _userService.GetUserByNetIDAsync(roomReservationDto.NetID);
 
                 // Set room to unavailable and assign it to the user
                 await _roomService.UpdateRoomStatus(roomReservationDto.Building, roomReservationDto.Room, false, user.NetID, user.Name);
@@ -68,7 +68,7 @@ namespace Reservation.Controllers //Need to fix this one
         {
             try
             {
-                var reservation = await _roomResService.GetAsync(id);
+                var reservation = await _roomResService.GetUserByNetIDAsync(id);
 
                 if (updateDto.Status == "approved")
                 {
@@ -97,8 +97,8 @@ namespace Reservation.Controllers //Need to fix this one
 
     public class RoomReservationDto
     {
-        public object Building { get; internal set; }
-        public object Room { get; internal set; }
-        public object NetID { get; internal set; }
+        public long Building { get; internal set; }
+        public long Room { get; internal set; }
+        public long NetID { get; internal set; }
     }
 }

@@ -41,7 +41,7 @@ builder.Services.AddSwaggerGen();
 
 
 
-var dbPath = "../database/dev.sqlite3"; 
+var dbPath = "../database/dev(1).sqlite3"; 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite($"Data Source={dbPath}"));
 

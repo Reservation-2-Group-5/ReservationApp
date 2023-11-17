@@ -45,7 +45,7 @@ public class DeviceResController : ControllerBase
         try
         {
             var submittedDeviceRes = await _deviceResService.CreateDeviceReservationAsync(deviceRes);
-            var user = await _userService.GetUserByIdAsync(deviceRes.NetID);
+            var user = await _userService.GetUserByNetIDAsync(deviceRes.NetID);
 
             
             var device = await _deviceService.GetDeviceByTagAsync(deviceRes.Tag);
@@ -84,7 +84,7 @@ public class DeviceResController : ControllerBase
                 var device = await _deviceService.GetDeviceByTagAsync(reservation.Tag);
                 device.Available = true;
                 
-                device.Assigned_To = null;
+                
 
                 await _deviceService.UpdateDeviceAsync(device);
             }

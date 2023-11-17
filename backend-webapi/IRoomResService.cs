@@ -15,7 +15,7 @@ namespace ReservationApp.Services
         Task DeleteRoomReservationAsync(int id);
         Task GetAllRoomReservations();
         Task<RoomResController> GetAllAsync();
-        Task<RoomResController> GetAsync(int id);
+        Task<RoomResController> GetUserByNetIDAsync(int id);
         Task<RoomResController> DeleteAsync(int id);
         Task<RoomResController> SubmitAsync(RoomReservationDto roomReservationDto);
     }

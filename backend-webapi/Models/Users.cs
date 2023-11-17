@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using System.ComponentModel.DataAnnotations; //Should be good but need to check schema
+﻿using System.ComponentModel.DataAnnotations; //Should be good but need to check schema
 
 namespace ReservationApp.Models
 {
